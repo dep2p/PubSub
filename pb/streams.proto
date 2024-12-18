@@ -1,0 +1,25 @@
+syntax = "proto3";
+package pb;
+
+
+// BasicMessage 定义了基本的消息结构
+message BasicMessage {
+    string type = 1;     // 消息类型
+    string sender = 2;   // 发送方的 peer.ID
+    string receiver = 3; // 接收方的 peer.ID
+}
+
+// StreamRequestMessage 定义了请求消息的结构
+message StreamRequestMessage {
+    BasicMessage message = 1; // 基本消息信息
+    bytes payload = 2;   // 消息负载
+}
+
+
+// StreamResponseMessage 定义了响应消息的结构
+message StreamResponseMessage {
+    BasicMessage message = 1; // 基本消息信息
+    int32 code = 2;      // 响应代码
+    string msg = 3;      // 响应消息
+    bytes data = 4;      // 响应数据
+}

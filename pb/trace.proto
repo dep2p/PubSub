@@ -1,0 +1,235 @@
+syntax = "proto3";
+
+package pb;
+
+// TraceEvent 表示一个追踪事件，包含了各种可能的事件类型和相关信息
+message TraceEvent {
+  // 事件的类型
+  Type type = 1;
+  // 触发事件的节点的 Peer ID
+  bytes peerID = 2;
+  // 事件的时间戳（Unix 时间）
+  int64 timestamp = 3;
+
+  // 发布消息事件的信息
+  PublishMessage publishMessage = 4;
+  // 拒绝消息事件的信息
+  RejectMessage rejectMessage = 5;
+  // 消息重复事件的信息
+  DuplicateMessage duplicateMessage = 6;
+  // 交付消息事件的信息
+  DeliverMessage deliverMessage = 7;
+  // 添加节点事件的信息
+  AddPeer addPeer = 8;
+  // 移除节点事件的信息
+  RemovePeer removePeer = 9;
+  // 接收 RPC 事件的信息
+  RecvRPC recvRPC = 10;
+  // 发送 RPC 事件的信息
+  SendRPC sendRPC = 11;
+  // 丢弃 RPC 事件的信息
+  DropRPC dropRPC = 12;
+  // 加入主题事件的信息
+  Join join = 13;
+  // 离开主题事件的信息
+  Leave leave = 14;
+  // Graft（添加连接）事件的信息
+  Graft graft = 15;
+  // Prune（修剪连接）事件的信息
+  Prune prune = 16;
+
+  // Type 枚举定义了不同的事件类型
+  enum Type {
+    PUBLISH_MESSAGE = 0; // 发布消息事件
+    REJECT_MESSAGE  = 1; // 拒绝消息事件
+    DUPLICATE_MESSAGE = 2; // 消息重复事件
+    DELIVER_MESSAGE = 3; // 交付消息事件
+    ADD_PEER = 4; // 添加节点事件
+    REMOVE_PEER = 5; // 移除节点事件
+    RECV_RPC = 6; // 接收 RPC 事件
+    SEND_RPC = 7; // 发送 RPC 事件
+    DROP_RPC = 8; // 丢弃 RPC 事件
+    JOIN = 9; // 加入主题事件
+    LEAVE = 10; // 离开主题事件
+    GRAFT = 11; // Graft（添加连接）事件
+    PRUNE = 12; // Prune（修剪连接）事件
+  }
+
+  // PublishMessage 包含发布消息事件的相关信息
+  message PublishMessage {
+    // 发布的消息 ID
+    bytes messageID = 1;
+    // 消息所属的主题
+    string topic = 2;
+  }
+
+  // RejectMessage 包含拒绝消息事件的相关信息
+  message RejectMessage {
+    // 被拒绝的消息 ID
+    bytes messageID = 1;
+    // 消息的发送者 ID
+    bytes receivedFrom = 2;
+    // 拒绝原因
+    string reason = 3;
+    // 消息所属的主题
+    string topic = 4;
+  }
+
+  // DuplicateMessage 包含消息重复事件的相关信息
+  message DuplicateMessage {
+    // 重复的消息 ID
+    bytes messageID = 1;
+    // 消息的发送者 ID
+    bytes receivedFrom = 2;
+    // 消息所属的主题
+    string topic = 3;
+  }
+
+  // DeliverMessage 包含消息交付事件的相关信息
+  message DeliverMessage {
+    // 交付的消息 ID
+    bytes messageID = 1;
+    // 消息所属的主题
+    string topic = 2;
+    // 消息的发送者 ID
+    bytes receivedFrom = 3;
+  }
+
+  // AddPeer 包含添加节点事件的相关信息
+  message AddPeer {
+    // 添加的节点的 Peer ID
+    bytes peerID = 1;
+    // 节点使用的协议
+    string proto = 2;
+  }
+
+  // RemovePeer 包含移除节点事件的相关信息
+  message RemovePeer {
+    // 被移除的节点的 Peer ID
+    bytes peerID = 1;
+  }
+
+  // RecvRPC 包含接收 RPC 事件的相关信息
+  message RecvRPC {
+    // 发送 RPC 的节点 ID
+    bytes receivedFrom = 1;
+    // RPC 元数据
+    RPCMeta meta = 2;
+  }
+
+  // SendRPC 包含发送 RPC 事件的相关信息
+  message SendRPC {
+    // 发送 RPC 的目标节点 ID
+    bytes sendTo = 1;
+    // RPC 元数据
+    RPCMeta meta = 2;
+  }
+
+  // DropRPC 包含丢弃 RPC 事件的相关信息
+  message DropRPC {
+    // 丢弃 RPC 的目标节点 ID
+    bytes sendTo = 1;
+    // RPC 元数据
+    RPCMeta meta = 2;
+  }
+
+  // Join 包含加入主题事件的相关信息
+  message Join {
+    // 加入的主题
+    string topic = 1;
+  }
+
+  // Leave 包含离开主题事件的相关信息
+  message Leave {
+    // 离开的主题
+    string topic = 2;
+  }
+
+  // Graft 包含 Graft（添加连接）事件的相关信息
+  message Graft {
+    // 目标节点的 Peer ID
+    bytes peerID = 1;
+    // 相关的主题
+    string topic = 2;
+  }
+
+  // Prune 包含 Prune（修剪连接）事件的相关信息
+  message Prune {
+    // 目标节点的 Peer ID
+    bytes peerID = 1;
+    // 相关的主题
+    string topic = 2;
+  }
+
+  // RPCMeta 包含 RPC 的元数据信息
+  message RPCMeta {
+    // 消息元数据列表
+    repeated MessageMeta messages = 1;
+    // 订阅元数据列表
+    repeated SubMeta subscription = 2;
+    // 控制信息元数据
+    ControlMeta control = 3;
+  }
+
+  // MessageMeta 包含消息的元数据信息
+  message MessageMeta {
+    // 消息 ID
+    bytes messageID = 1;
+    // 消息所属的主题
+    string topic = 2;
+  }
+
+  // SubMeta 包含订阅的元数据信息
+  message SubMeta {
+    // 是否订阅
+    bool subscribe = 1;
+    // 订阅的主题
+    string topic = 2;
+  }
+
+  // ControlMeta 包含控制信息的元数据
+  message ControlMeta {
+    // IHAVE 控制消息的元数据列表
+    repeated ControlIHaveMeta ihave = 1;
+    // IWANT 控制消息的元数据列表
+    repeated ControlIWantMeta iwant = 2;
+    // Graft 控制消息的元数据列表
+    repeated ControlGraftMeta graft = 3;
+    // Prune 控制消息的元数据列表
+    repeated ControlPruneMeta prune = 4;
+  }
+
+  // ControlIHaveMeta 包含 IHAVE 控制消息的元数据
+  message ControlIHaveMeta {
+    // 相关的主题
+    string topic = 1;
+    // 消息 ID 列表
+    repeated bytes messageIDs = 2;
+  }
+
+  // ControlIWantMeta 包含 IWANT 控制消息的元数据
+  message ControlIWantMeta {
+    // 消息 ID 列表
+    repeated bytes messageIDs = 1;
+  }
+
+  // ControlGraftMeta 包含 Graft 控制消息的元数据
+  message ControlGraftMeta {
+    // 相关的主题
+    string topic = 1;
+  }
+
+  // ControlPruneMeta 包含 Prune 控制消息的元数据
+  message ControlPruneMeta {
+    // 相关的主题
+    string topic = 1;
+    // 相关的节点列表
+    repeated bytes peers = 2;
+  }
+}
+
+// TraceEventBatch 表示一组 TraceEvent 的批处理
+message TraceEventBatch {
+  // TraceEvent 的批处理列表
+  repeated TraceEvent batch = 1;
+}

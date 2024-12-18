@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package pb;
+
+// RPC 消息，用于定义订阅选项和消息发布
+message RPC {
+    // 订阅选项的列表
+    repeated SubOpts subscriptions = 1; 
+
+    // 要发布的消息列表
+    repeated Message publish = 2;
+
+    // SubOpts 消息，用于定义订阅或取消订阅的选项
+    message SubOpts {
+        // 表示是否订阅或取消订阅
+        bool subscribe = 1; // 订阅或取消订阅
+
+        // 表示订阅的主题ID
+        string topicid = 2;
+    }
+
+    // 用于控制消息
+    ControlMessage control = 3;
+}
+
+// Target 消息，表示目标节点及其状态的结构
+message Target {
+    // 节点的 ID
+    bytes peer_id = 1;  
+    
+    // 标记该节点是否接收到了消息
+    bool  received = 2; 
+}
+
+// MessageMetadata 用于定义消息的元信息
+message MessageMetadata {
+    // 消息ID，用于标识和跟踪请求与响应之间的关系
+    string messageID = 1;
+
+    // 消息类型，指示是请求还是响应
+    enum MessageType {
+        REQUEST = 0;  // 请求消息
+        RESPONSE = 1; // 响应消息
+    }
+    MessageType type = 2;
+}
+
+// Message 消息，用于定义消息的结构
+message Message {
+    // 表示消息的发送者
+    bytes from = 1;
+
+    // 表示消息的目标节点列表
+    repeated Target targets = 2;
+
+    // 表示消息的数据内容
+    bytes data = 3;
+
+    // 表示消息的序列号
+    bytes seqno = 4;
+
+    // 表示消息的主题
+    string topic = 5;
+
+    // 表示消息的签名
+    bytes signature = 6;
+
+    // 表示用于验证签名的公钥
+    bytes key = 7;
+
+   // 表示系统内的消息元信息，用于跟踪和标识消息
+   MessageMetadata metadata = 8;
+}
+
+// ControlMessage 消息，用于定义控制消息的结构
+message ControlMessage {
+    // ihave 控制消息列表，用于通知接收方已知的消息
+    repeated ControlIHave ihave = 1;
+
+    // iwant 控制消息列表，用于请求接收方发送未接收的消息
+    repeated ControlIWant iwant = 2;
+
+    // graft 控制消息列表，用于通知接收方要加入的主题
+    repeated ControlGraft graft = 3;
+
+    // prune 控制消息列表，用于通知接收方要离开的主题
+    repeated ControlPrune prune = 4;
+}
+
+// ControlIHave 消息，用于定义已知消息的结构
+message ControlIHave {
+    // 表示已知消息的主题ID
+    string topicID = 1;
+
+    // 已知的消息ID列表
+    repeated string messageIDs = 2;
+}
+
+// ControlIWant 消息，用于定义请求消息的结构
+message ControlIWant {
+    // 请求的消息ID列表
+    repeated string messageIDs = 1;
+}
+
+// ControlGraft 消息，用于定义要加入的主题的结构
+message ControlGraft {
+    // 表示要加入的主题ID
+    string topicID = 1;
+}
+
+// ControlPrune 消息，用于定义要离开的主题的结构
+message ControlPrune {
+    // 表示要离开的主题ID
+    string topicID = 1;
+
+    // 要与之断开连接的节点信息列表
+    repeated PeerInfo peers = 2;
+
+    // 表示断开连接的时间（回退时间）
+    uint64 backoff = 3;
+}
+
+// PeerInfo 消息，用于定义节点信息的结构
+message PeerInfo {
+    // 表示节点的ID
+    bytes peerID = 1;
+
+    // 表示节点的签名记录
+    bytes signedPeerRecord = 2;
+}
