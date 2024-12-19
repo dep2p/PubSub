@@ -5,6 +5,7 @@ package pubsub
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -127,4 +128,114 @@ func (ps *PubSub) notifyNewPeer(peer peer.ID) {
 	case ps.newPeers <- struct{}{}:
 	default:
 	}
+}
+
+// NotifyNewPeer 通知系统有新的对等节点加入
+// 参数:
+//   - peer: 新加入节点的ID
+//
+// 返回值:
+//   - error: 如果节点不满足要求则返回错误
+func (ps *PubSub) NotifyNewPeer(peer peer.ID) error {
+	// 1. 检查 PubSub 是否已初始化
+	if ps == nil {
+		logrus.Error("PubSub 未初始化")
+		return fmt.Errorf("PubSub 未初始化")
+	}
+
+	// 2. 检查节点 ID 是否有效
+	if peer == "" {
+		logrus.Error("无效的节点 ID")
+		return fmt.Errorf("无效的节点 ID")
+	}
+
+	// 3. 检查连接状态
+	if ps.host.Network().Connectedness(peer) != network.Connected {
+		logrus.Errorf("节点 %s 未连接", peer)
+		return fmt.Errorf("节点 %s 未连接", peer.String())
+	}
+
+	// 4. 检查协议支持
+	protos, err := ps.host.Peerstore().GetProtocols(peer)
+	if err != nil {
+		logrus.Errorf("获取节点 %s 的协议失败: %v", peer, err)
+		return fmt.Errorf("获取节点 %s 的协议失败", peer.String())
+	}
+
+	if len(protos) == 0 {
+		logrus.Errorf("节点 %s 没有支持的协议", peer)
+		return fmt.Errorf("节点 %s 没有支持的协议", peer.String())
+	}
+
+	// 定义协议匹配函数
+	var supportsProtocol func(protocol.ID) bool
+	if ps.protoMatchFunc != nil {
+		// 如果存在自定义的协议匹配函数，使用它来构建支持的协议列表
+		var supportedProtocols []func(protocol.ID) bool
+		for _, proto := range ps.rt.Protocols() {
+			supportedProtocols = append(supportedProtocols, ps.protoMatchFunc(proto))
+		}
+
+		// 定义协议匹配检查函数
+		supportsProtocol = func(proto protocol.ID) bool {
+			for _, fn := range supportedProtocols {
+				if fn(proto) {
+					return true
+				}
+			}
+			return false
+		}
+	} else {
+		// 如果没有自定义匹配函数，使用简单的协议ID匹配
+		supportedProtocols := make(map[protocol.ID]struct{})
+		for _, proto := range ps.rt.Protocols() {
+			supportedProtocols[proto] = struct{}{}
+		}
+
+		supportsProtocol = func(proto protocol.ID) bool {
+			_, ok := supportedProtocols[proto]
+			return ok
+		}
+	}
+
+	// 检查节点是否支持任一所需协议
+	var supported bool
+	for _, p := range protos {
+		if supportsProtocol(p) {
+			supported = true
+			break
+		}
+	}
+
+	if !supported {
+		logrus.Errorf("节点 %s 不支持任何所需协议", peer)
+		return fmt.Errorf("节点 %s 不支持任何所需协议", peer.String())
+	}
+
+	// 5. 使用读写锁保护并发访问
+	ps.newPeersPrioLk.RLock()
+	defer ps.newPeersPrioLk.RUnlock()
+
+	ps.newPeersMx.Lock()
+	defer ps.newPeersMx.Unlock()
+
+	// 6. 检查节点是否已在待处理列表中
+	if _, ok := ps.newPeersPend[peer]; ok {
+		logrus.Warnf("节点 %s 已在待处理列表中", peer)
+		return fmt.Errorf("节点 %s 已在待处理列表中", peer.String())
+	}
+
+	// 7. 添加到待处理列表
+	ps.newPeersPend[peer] = struct{}{}
+	logrus.Debugf("节点 %s 已添加到待处理列表", peer.String())
+
+	// 8. 通知处理循环
+	select {
+	case ps.newPeers <- struct{}{}:
+		logrus.Infof("已通知处理循环新节点 %s 的加入", peer.String())
+	default:
+		logrus.Warnf("通知通道已满，节点 %s 将在下一轮处理", peer.String())
+	}
+
+	return nil
 }
