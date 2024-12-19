@@ -53,9 +53,6 @@ type NodeOption func(*Options) error
 // 返回值:
 //   - error: 如果应用选项时出现错误，返回相应的错误信息
 func (opt *Options) ApplyOptions(opts ...NodeOption) error {
-	opt.mu.Lock()         // 加锁以保护并发访问
-	defer opt.mu.Unlock() // 函数结束时解锁
-
 	// 遍历所有选项并应用
 	for _, o := range opts {
 		if err := o(opt); err != nil {
@@ -70,6 +67,8 @@ func (opt *Options) ApplyOptions(opts ...NodeOption) error {
 //   - *Options: 包含默认配置的 Options 对象
 func DefaultOptions() *Options {
 	return &Options{
+		mu: sync.Mutex{}, // 初始化互斥锁
+
 		// 降低跟随时间，加快消息响应速度
 		// 在小规模网络中，消息传播延迟较小，可以使用更短的跟随时间
 		FollowupTime: 500 * time.Millisecond,
