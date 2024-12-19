@@ -17,12 +17,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// 定义常量
+// DefaultPubsubProtocol 定义了默认的pubsub协议版本
 const (
-	DefaultPubsubProtocol = "/dep2p/pubsub/1.0.0" // 默认的pubsub协议版本
+	DefaultPubsubProtocol = "/dep2p/pubsub/1.0.0"
 )
 
 // PubSubMsgHandler 定义了处理其他节点发布消息的函数类型
+// 参数:
+//   - *Message: 接收到的消息对象
 type PubSubMsgHandler func(*Message)
 
 // NodePubSub 表示分布式存储网络的主要结构
@@ -36,7 +38,6 @@ type NodePubSub struct {
 	startUp          int32                    // 启动状态，用原子操作来保证线程安全
 	subscribedTopics map[string]*Subscription // 已订阅的主题，存储所有当前节点订阅的主题
 	subscribeLock    sync.Mutex               // 订阅锁，用于保护订阅操作的并发访问
-	// discoveryService discovery.Discovery      // 发现服务，用于在网络中发现其他节点
 }
 
 // NewNodePubSub 创建并返回一个新的 NodePubSub 实例
@@ -46,7 +47,7 @@ type NodePubSub struct {
 //   - opts: 节点选项，用于自定义PubSub的行为
 //
 // 返回:
-//   - *PubSub: 新创建的PubSub实例
+//   - *NodePubSub: 新创建的NodePubSub实例
 //   - error: 如果创建过程中出现错误，返回相应的错误信息
 func NewNodePubSub(ctx context.Context, host host.Host, opts ...NodeOption) (*NodePubSub, error) {
 	// 初始化选项，应用用户提供的自定义选项
@@ -58,13 +59,6 @@ func NewNodePubSub(ctx context.Context, host host.Host, opts ...NodeOption) (*No
 	// 创建可取消的上下文，用于控制PubSub及其子组件的生命周期
 	ctx, cancel := context.WithCancel(ctx)
 
-	// 创建发现服务，用于在网络中发现其他节点
-	// discoveryService, err := createDiscoveryService(ctx, host)
-	// if err != nil {
-	// 	cancel()
-	// 	return nil, err
-	// }
-
 	// 初始化PubSub实例，设置各个字段的初始值
 	pubsub := &NodePubSub{
 		ctx:              ctx,
@@ -73,7 +67,6 @@ func NewNodePubSub(ctx context.Context, host host.Host, opts ...NodeOption) (*No
 		topicMap:         make(map[string]*Topic),
 		startUp:          0,
 		subscribedTopics: make(map[string]*Subscription),
-		// discoveryService: discoveryService,
 	}
 
 	// 启动 PubSub 服务
@@ -104,10 +97,8 @@ func (pubsub *NodePubSub) startPubSub(options *Options) error {
 	// 根据 LoadConfig 选项决定是否加载详细配置
 	if options.GetLoadConfig() {
 		// 创建JSON追踪器，用于记录和追踪PubSub网络中的事件和消息流
-		// 获取系统的临时目录
-		tempDir := os.TempDir()
-		// 构建临时文件路径
-		traceFilePath := filepath.Join(tempDir, "trace.out.json")
+		tempDir := os.TempDir()                                   // 获取系统的临时目录
+		traceFilePath := filepath.Join(tempDir, "trace.out.json") // 构建临时文件路径
 		tracer, err := NewJSONTracer(traceFilePath)
 		if err != nil {
 			logrus.Errorf("[PubSub] 创建JSON追踪器失败: %v", err)
@@ -126,14 +117,11 @@ func (pubsub *NodePubSub) startPubSub(options *Options) error {
 		switch options.GetPubSubMode() {
 		case GossipSub:
 			// GossipSub 特定的参数配置
-			// 设置 GossipSub 参数
-			params := DefaultGossipSubParams()
+			params := DefaultGossipSubParams() // 设置 GossipSub 参数
 
-			// 设置每个节点维护的对等点数量，最小为2
-			params.D = int(math.Max(2, float64(options.D)))
+			params.D = int(math.Max(2, float64(options.D))) // 设置每个节点维护的对等点数量，最小为2
 
-			// 设置对等点数量的最小阈值，最小为1
-			params.Dlo = int(math.Max(1, float64(options.Dlo)))
+			params.Dlo = int(math.Max(1, float64(options.Dlo))) // 设置对等点数量的最小阈值，最小为1
 
 			// 设置心跳间隔，不超过1秒
 			if options.HeartbeatInterval > time.Second {
@@ -186,6 +174,11 @@ func (pubsub *NodePubSub) startPubSub(options *Options) error {
 		pubsubOpts = []Option{
 			WithMaxMessageSize(options.MaxMessageSize),
 		}
+	}
+
+	// 添加 Discovery 配置
+	if discovery := options.GetNodeDiscovery(); discovery != nil {
+		pubsubOpts = append(pubsubOpts, WithDiscovery(discovery))
 	}
 
 	// 根据配置的 PubSubMode 创建相应的发布订阅实例
@@ -414,16 +407,9 @@ func (pubsub *NodePubSub) SubscribeWithTopic(topic string, handler PubSubMsgHand
 }
 
 // topicSubLoop 处理订阅主题的消息循环
-//
 // 参数:
-// - topicSub: *Subscription 表示订阅的主题
-// - handler: PubSubMsgHandler 表示处理消息的回调函数
-//
-// 功能:
-// - 持续监听订阅主题的消息
-// - 过滤掉自己发送的消息
-// - 异步处理接收到的消息
-// - 处理各种错误情况
+//   - topicSub: 表示订阅的主题
+//   - handler: 表示处理消息的回调函数
 func (pubsub *NodePubSub) topicSubLoop(topicSub *Subscription, handler PubSubMsgHandler) {
 	logrus.Info("[PubSub] 开始订阅消息循环")
 
@@ -501,7 +487,7 @@ func (pubsub *NodePubSub) topicSubLoop(topicSub *Subscription, handler PubSubMsg
 
 // Pubsub 返回 PubSub 实例
 // 返回:
-//   - *PubSub: 当前PubSub例使用的PubSub实例
+//   - *PubSub: 当前NodePubSub实例使用的PubSub实例
 func (pubsub *NodePubSub) Pubsub() *PubSub {
 	return pubsub.pubsub
 }

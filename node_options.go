@@ -1,9 +1,11 @@
+// Package pubsub 提供了发布订阅系统的实现
 package pubsub
 
 import (
 	"sync"
 	"time"
 
+	"github.com/libp2p/go-libp2p/core/discovery"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
@@ -11,31 +13,37 @@ import (
 type PubSubType int
 
 const (
-	GossipSub PubSubType = iota // GossipSub 类型
-	FloodSub                    // FloodSub 类型
-	RandomSub                   // RandomSub 类型
+	GossipSub PubSubType = iota // GossipSub 类型,基于 gossip 协议的发布订阅
+	FloodSub                    // FloodSub 类型,基于洪泛的发布订阅
+	RandomSub                   // RandomSub 类型,基于随机选择的发布订阅
 )
 
 // Options 定义了 PubSub 的配置选项
 type Options struct {
 	mu sync.Mutex // 互斥锁，用于保护字段的并发访问
 
-	FollowupTime        time.Duration   // 跟随时间
-	GossipFactor        float64         // Gossip 因子
-	D                   int             // GossipSub 主题网格的理想度数
-	Dlo                 int             // GossipSub 主题网格中保持的最少节点数
-	MaxPendingConns     int             // 最大待处理连接数
-	MaxMessageSize      int             // 最大消息大小
-	SignMessages        bool            // 是否签名消息
-	ValidateMessages    bool            // 是否验证消息
-	DirectPeers         []peer.AddrInfo // 直连对等节点列表
-	HeartbeatInterval   time.Duration   // 心跳间隔
-	MaxTransmissionSize int             // 最大传输大小
-	LoadConfig          bool            // 是否加载配置选项
-	PubSubMode          PubSubType      // 发布订阅模式
+	FollowupTime        time.Duration       // 跟随时间,用于控制消息传播延迟
+	GossipFactor        float64             // Gossip 因子,控制消息传播的概率
+	D                   int                 // GossipSub 主题网格的理想度数,每个节点维护的连接数
+	Dlo                 int                 // GossipSub 主题网格中保持的最少节点数,网格连接的下限
+	MaxPendingConns     int                 // 最大待处理连接数,限制并发连接请求数量
+	MaxMessageSize      int                 // 最大消息大小,限制单条消息的字节数
+	SignMessages        bool                // 是否签名消息,控制消息的安全性
+	ValidateMessages    bool                // 是否验证消息,控制消息的合法性检查
+	DirectPeers         []peer.AddrInfo     // 直连对等节点列表,保存需要直接连接的节点信息
+	HeartbeatInterval   time.Duration       // 心跳间隔,控制节点存活检测的频率
+	MaxTransmissionSize int                 // 最大传输大小,限制单次传输的字节数
+	LoadConfig          bool                // 是否加载配置选项,控制是否使用外部配置
+	PubSubMode          PubSubType          // 发布订阅模式,指定使用的协议类型
+	discovery           discovery.Discovery // Discovery服务,用于节点发现
 }
 
 // NodeOption 定义了一个函数类型，用于配置PubSub
+// 参数:
+//   - *Options: 需要配置的选项对象
+//
+// 返回值:
+//   - error: 配置过程中的错误信息
 type NodeOption func(*Options) error
 
 // ApplyOptions 应用给定的选项到 Options 对象
@@ -47,6 +55,8 @@ type NodeOption func(*Options) error
 func (opt *Options) ApplyOptions(opts ...NodeOption) error {
 	opt.mu.Lock()         // 加锁以保护并发访问
 	defer opt.mu.Unlock() // 函数结束时解锁
+
+	// 遍历所有选项并应用
 	for _, o := range opts {
 		if err := o(opt); err != nil {
 			return err // 如果应用某个选项出错，立即返回错误
@@ -54,26 +64,6 @@ func (opt *Options) ApplyOptions(opts ...NodeOption) error {
 	}
 	return nil // 所有选项应用成功，返回 nil
 }
-
-// DefaultOptions 返回一个带有默认配置的 Options 对象
-// 返回值:
-//   - *Options: 包含默认配置的 Options 对象
-// func DefaultOptions() *Options {
-// 	return &Options{
-// 		FollowupTime:        1 * time.Second, // 默认跟随时间为1秒
-// 		GossipFactor:        0.12,            // 默认Gossip因子为0.12
-// 		D:                   8,               // 默认主题网格的理想度数为8
-// 		Dlo:                 6,               // 默认主题网格中保持的最少节点数为6
-// 		MaxPendingConns:     23,              // 默认最大待处理连接数为23
-// 		MaxMessageSize:      1024 * 1024,     // 默认最大消息大小为1MB
-// 		SignMessages:        true,            // 默认签名消息
-// 		ValidateMessages:    true,            // 默认验证消息
-// 		HeartbeatInterval:   1 * time.Second, // 默认心跳间隔为1秒
-// 		MaxTransmissionSize: 10 << 20,        // 默认最大传输大小为10MB
-// 		LoadConfig:          false,           // 默认不加载配置
-// 		PubSubMode:          GossipSub,       // 默认使用 GossipSub
-// 	}
-// }
 
 // DefaultOptions 返回一个带有默认配置的 Options 对象
 // 返回值:
@@ -267,6 +257,11 @@ func WithSetDlo(dlo int) NodeOption {
 }
 
 // WithSetLoadConfig 设置是否加载配置选项
+// 参数:
+//   - load: 是否加载配置
+//
+// 返回值:
+//   - NodeOption: 返回一个配置函数
 func WithSetLoadConfig(load bool) NodeOption {
 	return func(o *Options) error {
 		o.LoadConfig = load
@@ -275,11 +270,40 @@ func WithSetLoadConfig(load bool) NodeOption {
 }
 
 // WithSetPubSubMode 设置发布订阅模式
+// 参数:
+//   - mode: 要设置的发布订阅模式
+//
+// 返回值:
+//   - NodeOption: 返回一个配置函数
 func WithSetPubSubMode(mode PubSubType) NodeOption {
 	return func(o *Options) error {
 		o.PubSubMode = mode
 		return nil
 	}
+}
+
+// WithNodeDiscovery 设置 Discovery 服务
+// 参数:
+//   - d: 要设置的 Discovery 服务实例
+//
+// 返回值:
+//   - NodeOption: 返回一个配置函数
+func WithNodeDiscovery(d discovery.Discovery) NodeOption {
+	return func(opt *Options) error {
+		opt.mu.Lock()         // 加锁保护并发访问
+		defer opt.mu.Unlock() // 函数结束时解锁
+		opt.discovery = d     // 设置 discovery 服务
+		return nil
+	}
+}
+
+// GetNodeDiscovery 获取配置的 Discovery 服务
+// 返回值:
+//   - discovery.Discovery: 当前配置的 Discovery 服务实例
+func (opt *Options) GetNodeDiscovery() discovery.Discovery {
+	opt.mu.Lock()         // 加锁保护并发访问
+	defer opt.mu.Unlock() // 函数结束时解锁
+	return opt.discovery  // 返回 discovery 服务
 }
 
 // 以下是获取各种选项值的方法，它们都使用互斥锁来保证并发安全
@@ -288,8 +312,8 @@ func WithSetPubSubMode(mode PubSubType) NodeOption {
 // 返回值:
 //   - time.Duration: 当前设置的跟随时间
 func (o *Options) GetFollowupTime() time.Duration {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.FollowupTime
 }
 
@@ -297,8 +321,8 @@ func (o *Options) GetFollowupTime() time.Duration {
 // 返回值:
 //   - float64: 当前设置的Gossip因子
 func (o *Options) GetGossipFactor() float64 {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.GossipFactor
 }
 
@@ -306,8 +330,8 @@ func (o *Options) GetGossipFactor() float64 {
 // 返回值:
 //   - int: 当前设置的最大待处理连接数
 func (o *Options) GetMaxPendingConns() int {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.MaxPendingConns
 }
 
@@ -315,8 +339,8 @@ func (o *Options) GetMaxPendingConns() int {
 // 返回值:
 //   - int: 当前设置的最大消息大小
 func (o *Options) GetMaxMessageSize() int {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.MaxMessageSize
 }
 
@@ -324,8 +348,8 @@ func (o *Options) GetMaxMessageSize() int {
 // 返回值:
 //   - bool: 当前是否设置为签名消息
 func (o *Options) GetSignMessages() bool {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.SignMessages
 }
 
@@ -333,8 +357,8 @@ func (o *Options) GetSignMessages() bool {
 // 返回值:
 //   - bool: 当前是否设置为验证消息
 func (o *Options) GetValidateMessages() bool {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.ValidateMessages
 }
 
@@ -342,8 +366,8 @@ func (o *Options) GetValidateMessages() bool {
 // 返回值:
 //   - []peer.AddrInfo: 当前设置的直连对等节点列表
 func (o *Options) GetDirectPeers() []peer.AddrInfo {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.DirectPeers
 }
 
@@ -351,8 +375,8 @@ func (o *Options) GetDirectPeers() []peer.AddrInfo {
 // 返回值:
 //   - time.Duration: 当前设置的心跳间隔
 func (o *Options) GetHeartbeatInterval() time.Duration {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.HeartbeatInterval
 }
 
@@ -360,8 +384,8 @@ func (o *Options) GetHeartbeatInterval() time.Duration {
 // 返回值:
 //   - int: 当前设置的最大传输大小
 func (o *Options) GetMaxTransmissionSize() int {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.MaxTransmissionSize
 }
 
@@ -369,8 +393,8 @@ func (o *Options) GetMaxTransmissionSize() int {
 // 返回值:
 //   - int: 当前设置的理想度数
 func (o *Options) GetD() int {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.D
 }
 
@@ -378,21 +402,25 @@ func (o *Options) GetD() int {
 // 返回值:
 //   - int: 当前设置的最少节点数
 func (o *Options) GetDlo() int {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.Dlo
 }
 
 // GetLoadConfig 获取是否加载配置选项
+// 返回值:
+//   - bool: 当前是否设置为加载配置
 func (o *Options) GetLoadConfig() bool {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.LoadConfig
 }
 
 // GetPubSubMode 获取发布订阅模式
+// 返回值:
+//   - PubSubType: 当前设置的发布订阅模式
 func (o *Options) GetPubSubMode() PubSubType {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mu.Lock()         // 加锁保护并发访问
+	defer o.mu.Unlock() // 函数结束时解锁
 	return o.PubSubMode
 }

@@ -20,11 +20,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
-const (
-	// numHosts = 3
-	numHosts = 1
-)
-
 // ErrTopicClosed 表示如果在主题关闭后使用 Topic，将返回此错误。
 var ErrTopicClosed = errors.New("this Topic is closed, try opening a new one")
 
