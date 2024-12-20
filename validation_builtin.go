@@ -8,8 +8,8 @@ import (
 	"encoding/binary"
 	"sync"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sirupsen/logrus"
 )
 
 // PeerMetadataStore 是一个接口，用于存储和检索每个对等节点的元数据
@@ -63,7 +63,7 @@ func (v *BasicSeqnoValidator) validate(ctx context.Context, _ peer.ID, m *Messag
 	v.mx.RUnlock()
 
 	if err != nil {
-		logrus.Warnf("error retrieving peer nonce: %s", err)
+		logger.Warnf("获取对等节点 nonce 失败: %s", err)
 		return ValidationIgnore
 	}
 
@@ -89,7 +89,7 @@ func (v *BasicSeqnoValidator) validate(ctx context.Context, _ peer.ID, m *Messag
 
 	nonceBytes, err = v.meta.Get(ctx, p)
 	if err != nil {
-		logrus.Warnf("error retrieving peer nonce: %s", err)
+		logger.Warnf("获取对等节点 nonce 失败: %s", err)
 		return ValidationIgnore
 	}
 
@@ -107,7 +107,7 @@ func (v *BasicSeqnoValidator) validate(ctx context.Context, _ peer.ID, m *Messag
 
 	err = v.meta.Put(ctx, p, nonceBytes)
 	if err != nil {
-		logrus.Warnf("error storing peer nonce: %s", err)
+		logger.Warnf("存储对等节点 nonce 失败: %s", err)
 	}
 
 	return ValidationAccept

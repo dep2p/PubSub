@@ -9,12 +9,12 @@ import (
 	"io"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	pb "github.com/dep2p/pubsub/pb"
 
 	"github.com/gogo/protobuf/proto"
 	pool "github.com/libp2p/go-buffer-pool"
 	"github.com/multiformats/go-varint"
-	"github.com/sirupsen/logrus"
 
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -60,7 +60,7 @@ func (p *PubSub) handleNewStream(s network.Stream) {
 	p.inboundStreamsMx.Lock()            // 加锁保护对入站流映射的访问
 	other, dup := p.inboundStreams[peer] // 检查是否已有来自该节点的入站流
 	if dup {
-		logrus.Debugf("duplicate inbound stream from %s; resetting other stream", peer)
+		logger.Debugf("重复的入站流来自 %s; 重置旧的重复流", peer)
 		other.Reset() // 如果有重复的入站流，重置旧的重复流
 	}
 	p.inboundStreams[peer] = s  // 将新建的流添加到入站流映射中
@@ -80,8 +80,8 @@ func (p *PubSub) handleNewStream(s network.Stream) {
 		if err != nil {
 			r.ReleaseMsg(msgbytes) // 释放消息缓冲区
 			if err != io.EOF {     // 如果不是正常的流结束错误
-				s.Reset()                                                                  // 重置流
-				logrus.Debugf("error reading rpc from %s: %s", s.Conn().RemotePeer(), err) // 记录读取错误
+				s.Reset()                                                       // 重置流
+				logger.Debugf("从 %s 读取 RPC 失败: %s", s.Conn().RemotePeer(), err) // 记录读取错误
 			} else {
 				// 友好关闭连接
 				s.Close() // 关闭流
@@ -96,9 +96,9 @@ func (p *PubSub) handleNewStream(s network.Stream) {
 		err = rpc.Unmarshal(msgbytes) // 解码消息字节到RPC对象
 		r.ReleaseMsg(msgbytes)        // 释放消息缓冲区
 		if err != nil {
-			s.Reset()                                                         // 重置流
-			logrus.Warnf("bogus rpc from %s: %s", s.Conn().RemotePeer(), err) // 记录无效RPC错误
-			return                                                            // 退出方法
+			s.Reset()                                                     // 重置流
+			logger.Warnf("从 %s 读取无效 RPC: %s", s.Conn().RemotePeer(), err) // 记录无效RPC错误
+			return                                                        // 退出方法
 		}
 
 		rpc.from = peer // 设置消息的来源节点ID
@@ -144,7 +144,7 @@ func (p *PubSub) handleNewPeer(ctx context.Context, pid peer.ID, outgoing <-chan
 	// 尝试建立到新节点的流连接
 	s, err := p.host.NewStream(p.ctx, pid, p.rt.Protocols()...)
 	if err != nil {
-		logrus.Debug("opening new stream to peer: ", err, pid)
+		logger.Debugf("打开新流到对等节点失败: %s", err)
 
 		// 如果创建流连接失败，发送新节点错误到newPeerError通道
 		select {
@@ -192,7 +192,7 @@ func (p *PubSub) handlePeerDead(s network.Stream) {
 
 	_, err := s.Read([]byte{0})
 	if err == nil {
-		logrus.Debugf("unexpected message from %s", pid)
+		logger.Debugf("从 %s 收到意外消息", pid)
 	}
 
 	s.Reset()             // 重置流
@@ -232,8 +232,8 @@ func handleSendingMessages(ctx context.Context, s network.Stream, outgoing <-cha
 
 			err := writeRpc(rpc) // 调用 writeRpc 写入RPC消息
 			if err != nil {
-				s.Reset()                                                              // 如果写入失败，重置流
-				logrus.Debugf("writing message to %s: %s", s.Conn().RemotePeer(), err) // 记录写入错误
+				s.Reset()                                                    // 如果写入失败，重置流
+				logger.Debugf("写入消息到 %s 失败: %s", s.Conn().RemotePeer(), err) // 记录写入错误
 				return
 			}
 		case <-ctx.Done(): // 如果上下文完成

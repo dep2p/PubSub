@@ -11,9 +11,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	pb "github.com/dep2p/pubsub/pb"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -324,19 +323,22 @@ func WithPeerScore(params *PeerScoreParams, thresholds *PeerScoreThresholds) Opt
 	return func(ps *PubSub) error { // 返回的函数，接收 *PubSub 类型参数并返回 error。
 		gs, ok := ps.rt.(*GossipSubRouter) // 类型断言，检查路由器是否为 GossipSubRouter 类型。
 		if !ok {                           // 如果断言失败，表示路由器不是 gossipsub 类型。
-			return fmt.Errorf("pubsub router is not gossipsub") // 返回错误，说明当前路由器不是 gossipsub。
+			logger.Warnf("pubsub 路由器不是 gossipsub")      // 返回错误，说明当前路由器不是 gossipsub。
+			return fmt.Errorf("pubsub 路由器不是 gossipsub") // 返回错误，说明当前路由器不是 gossipsub。
 		}
 
 		// 检查评分参数的合法性
 		err := params.validate() // 调用 validate 方法验证 PeerScoreParams 的合法性。
 		if err != nil {          // 如果验证失败，返回错误。
-			return err // 返回错误信息。
+			logger.Warnf("peer score 参数验证失败: %v", err) // 返回错误信息。
+			return err                                 // 返回错误信息。
 		}
 
 		// 检查阈值的合法性
 		err = thresholds.validate() // 调用 validate 方法验证 PeerScoreThresholds 的合法性。
 		if err != nil {             // 如果验证失败，返回错误。
-			return err // 返回错误信息。
+			logger.Warnf("peer score 阈值验证失败: %v", err) // 返回错误信息。
+			return err                                 // 返回错误信息。
 		}
 
 		gs.score = newPeerScore(params)                                         // 创建新的对等节点评分实例，并赋值给路由器的 score 字段。
@@ -373,7 +375,8 @@ func WithFloodPublish(floodPublish bool) Option {
 	return func(ps *PubSub) error { // 返回的函数，接收 *PubSub 类型参数并返回 error。
 		gs, ok := ps.rt.(*GossipSubRouter) // 类型断言，检查路由器是否为 GossipSubRouter 类型。
 		if !ok {                           // 如果断言失败，表示路由器不是 gossipsub 类型。
-			return fmt.Errorf("pubsub router is not gossipsub") // 返回错误，说明当前路由器不是 gossipsub。
+			logger.Warnf("发布订阅路由器不是 gossipsub 类型")      // 返回错误，说明当前路由器不是 gossipsub。
+			return fmt.Errorf("发布订阅路由器不是 gossipsub 类型") // 返回错误，说明当前路由器不是 gossipsub。
 		}
 
 		gs.floodPublish = floodPublish // 设置 floodPublish 字段，根据参数决定是否启用洪水发布。
@@ -392,7 +395,8 @@ func WithPeerExchange(doPX bool) Option {
 	return func(ps *PubSub) error { // 返回的函数，接收 *PubSub 类型参数并返回 error。
 		gs, ok := ps.rt.(*GossipSubRouter) // 类型断言，检查路由器是否为 GossipSubRouter 类型。
 		if !ok {                           // 如果断言失败，表示路由器不是 gossipsub 类型。
-			return fmt.Errorf("pubsub router is not gossipsub") // 返回错误，说明当前路由器不是 gossipsub。
+			logger.Warnf("发布订阅路由器不是 gossipsub 类型")      // 返回错误，说明当前路由器不是 gossipsub。
+			return fmt.Errorf("发布订阅路由器不是 gossipsub 类型") // 返回错误，说明当前路由器不是 gossipsub。
 		}
 
 		gs.doPX = doPX // 设置 doPX 字段，根据参数决定是否启用对等节点交换。
@@ -411,7 +415,8 @@ func WithDirectPeers(pis []peer.AddrInfo) Option {
 	return func(ps *PubSub) error { // 返回的函数，接收 *PubSub 类型参数并返回 error。
 		gs, ok := ps.rt.(*GossipSubRouter) // 类型断言，检查路由器是否为 GossipSubRouter 类型。
 		if !ok {                           // 如果断言失败，表示路由器不是 gossipsub 类型。
-			return fmt.Errorf("pubsub router is not gossipsub") // 返回错误，说明当前路由器不是 gossipsub。
+			logger.Warnf("发布订阅路由器不是 gossipsub 类型")      // 返回错误，说明当前路由器不是 gossipsub。
+			return fmt.Errorf("发布订阅路由器不是 gossipsub 类型") // 返回错误，说明当前路由器不是 gossipsub。
 		}
 
 		direct := make(map[peer.ID]struct{}) // 创建一个空的 map，用于存储直接对等节点的 ID。
@@ -440,7 +445,8 @@ func WithDirectConnectTicks(t uint64) Option {
 	return func(ps *PubSub) error { // 返回的函数，接收 *PubSub 类型参数并返回 error。
 		gs, ok := ps.rt.(*GossipSubRouter) // 类型断言，检查路由器是否为 GossipSubRouter 类型。
 		if !ok {                           // 如果断言失败，表示路由器不是 gossipsub 类型。
-			return fmt.Errorf("pubsub router is not gossipsub") // 返回错误，说明当前路由器不是 gossipsub。
+			logger.Warnf("发布订阅路由器不是 gossipsub 类型")      // 返回错误，说明当前路由器不是 gossipsub。
+			return fmt.Errorf("发布订阅路由器不是 gossipsub 类型") // 返回错误，说明当前路由器不是 gossipsub。
 		}
 		gs.params.DirectConnectTicks = t // 将传入的心跳滴答次数赋值给 gossipsub 路由器的 DirectConnectTicks 参数。
 		return nil                       // 返回 nil，表示没有错误。
@@ -457,7 +463,8 @@ func WithGossipSubParams(cfg GossipSubParams) Option {
 	return func(ps *PubSub) error { // 返回的函数，接收 *PubSub 类型参数并返回 error。
 		gs, ok := ps.rt.(*GossipSubRouter) // 类型断言，检查路由器是否为 GossipSubRouter 类型。
 		if !ok {                           // 如果断言失败，表示路由器不是 gossipsub 类型。
-			return fmt.Errorf("pubsub router is not gossipsub") // 返回错误，说明当前路由器不是 gossipsub。
+			logger.Warnf("发布订阅路由器不是 gossipsub 类型")      // 返回错误，说明当前路由器不是 gossipsub。
+			return fmt.Errorf("发布订阅路由器不是 gossipsub 类型") // 返回错误，说明当前路由器不是 gossipsub。
 		}
 		// 覆盖当前配置和路由器中的相关变量。
 		gs.params = cfg                                                   // 使用传入的 GossipSubParams 配置覆盖当前路由器的参数。
@@ -592,7 +599,7 @@ func (gs *GossipSubRouter) manageAddrBook() {
 		&event.EvtPeerConnectednessChanged{},    // 节点连接状态变化事件。
 	})
 	if err != nil { // 如果订阅失败，记录错误日志并返回。
-		logrus.Errorf("failed to subscribe to peer identification events: %v", err) // 记录订阅事件失败的错误信息。
+		logger.Errorf("订阅节点身份识别事件失败: %v", err) // 记录订阅事件失败的错误信息。
 		return
 	}
 	defer sub.Close() // 在函数返回时关闭订阅，以释放资源。
@@ -604,7 +611,7 @@ func (gs *GossipSubRouter) manageAddrBook() {
 			if ok {                             // 如果实现了 io.Closer 接口，则尝试关闭地址簿。
 				errClose := cabCloser.Close() // 调用 Close 方法关闭地址簿。
 				if errClose != nil {          // 如果关闭失败，记录警告日志。
-					logrus.Warnf("failed to close addr book: %v", errClose) // 记录关闭地址簿失败的警告信息。
+					logger.Warnf("关闭地址簿失败: %v", errClose) // 记录关闭地址簿失败的警告信息。
 				}
 			}
 			return // 返回，结束函数执行。
@@ -620,7 +627,7 @@ func (gs *GossipSubRouter) manageAddrBook() {
 						}
 						_, err := cab.ConsumePeerRecord(ev.SignedPeerRecord, ttl) // 消费签名的对等节点记录，并设置相应的 TTL。
 						if err != nil {                                           // 如果消费失败，记录警告日志。
-							logrus.Warnf("failed to consume signed peer record: %v", err) // 记录消费签名对等节点记录失败的警告信息。
+							logger.Warnf("消费签名对等节点记录失败: %v", err) // 记录消费签名对等节点记录失败的警告信息。
 						}
 					}
 				}
@@ -638,9 +645,9 @@ func (gs *GossipSubRouter) manageAddrBook() {
 //   - p: peer.ID 类型，表示对等节点的 ID。
 //   - proto: protocol.ID 类型，表示协议 ID。
 func (gs *GossipSubRouter) AddPeer(p peer.ID, proto protocol.ID) {
-	logrus.Debugf("PEERUP: Add new peer %s using %s", p, proto) // 记录添加新对等节点的调试信息。
-	gs.tracer.AddPeer(p, proto)                                 // 调用 tracer 的 AddPeer 方法，记录对等节点的添加信息。
-	gs.peers[p] = proto                                         // 将对等节点和协议 ID 添加到 peers 映射中。
+	logger.Debugf("对等节点上线: %s 使用 %s", p, proto) // 记录添加新对等节点的调试信息。
+	gs.tracer.AddPeer(p, proto)                 // 调用 tracer 的 AddPeer 方法，记录对等节点的添加信息。
+	gs.peers[p] = proto                         // 将对等节点和协议 ID 添加到 peers 映射中。
 
 	// 追踪连接方向
 	outbound := false                           // 初始化 outbound 变量，表示连接方向是否为出站。
@@ -670,10 +677,10 @@ loop: // 标签，用于在找到符合条件的连接时跳出循环。
 // 参数:
 //   - p: peer.ID 类型，表示对等节点的 ID。
 func (gs *GossipSubRouter) RemovePeer(p peer.ID) {
-	logrus.Debugf("PEERDOWN: Remove disconnected peer %s", p) // 记录移除对等节点的调试信息。
-	gs.tracer.RemovePeer(p)                                   // 调用 tracer 的 RemovePeer 方法，记录对等节点的移除信息。
-	delete(gs.peers, p)                                       // 从 peers 映射中删除对等节点。
-	for _, peers := range gs.mesh {                           // 遍历所有 mesh 主题的对等节点集合。
+	logger.Debugf("对等节点下线: %s", p)  // 记录移除对等节点的调试信息。
+	gs.tracer.RemovePeer(p)         // 调用 tracer 的 RemovePeer 方法，记录对等节点的移除信息。
+	delete(gs.peers, p)             // 从 peers 映射中删除对等节点。
+	for _, peers := range gs.mesh { // 遍历所有 mesh 主题的对等节点集合。
 		delete(peers, p) // 从每个主题的对等节点集合中删除指定对等节点。
 	}
 	for _, peers := range gs.fanout { // 遍历所有 fanout 主题的对等节点集合。
@@ -773,19 +780,19 @@ func (gs *GossipSubRouter) handleIHave(p peer.ID, ctl *pb.ControlMessage) []*pb.
 	// 忽略评分低于 gossip 阈值的对等节点的 IHAVE gossip
 	score := gs.score.Score(p)      // 获取对等节点的评分。
 	if score < gs.gossipThreshold { // 如果评分低于 gossip 阈值，忽略此对等节点的 IHAVE 消息。
-		logrus.Debugf("IHAVE: ignoring peer %s with score below threshold [score = %f]", p, score) // 记录忽略消息的调试信息。
-		return nil                                                                                 // 返回空列表。
+		logger.Debugf("IHAVE: 忽略评分低于阈值的对等节点 %s [score = %f]", p, score) // 记录忽略消息的调试信息。
+		return nil                                                      // 返回空列表。
 	}
 
 	// IHAVE flood 保护
 	gs.peerhave[p]++                                 // 增加此对等节点的 IHAVE 消息计数。
 	if gs.peerhave[p] > gs.params.MaxIHaveMessages { // 如果对等节点的 IHAVE 消息计数超过了限制，忽略此消息。
-		logrus.Debugf("IHAVE: peer %s has advertised too many times (%d) within this heartbeat interval; ignoring", p, gs.peerhave[p]) // 记录忽略消息的调试信息。
-		return nil                                                                                                                     // 返回空列表。
+		logger.Debugf("IHAVE: 对等节点 %s 在心跳间隔内广告了太多消息 (%d); 忽略", p, gs.peerhave[p]) // 记录忽略消息的调试信息。
+		return nil                                                                // 返回空列表。
 	}
 	if gs.iasked[p] >= gs.params.MaxIHaveLength { // 如果已请求的消息数量超过了限制，忽略此消息。
-		logrus.Debugf("IHAVE: peer %s has already advertised too many messages (%d); ignoring", p, gs.iasked[p]) // 记录忽略消息的调试信息。
-		return nil                                                                                               // 返回空列表。
+		logger.Debugf("IHAVE: 对等节点 %s 已经广告了太多消息 (%d); 忽略", p, gs.iasked[p]) // 记录忽略消息的调试信息。
+		return nil                                                          // 返回空列表。
 	}
 
 	iwant := make(map[string]struct{})     // 创建一个空的 map，用于存储请求的消息 ID。
@@ -804,8 +811,8 @@ func (gs *GossipSubRouter) handleIHave(p peer.ID, ctl *pb.ControlMessage) []*pb.
 		for msgIdx, mid := range ihave.GetMessageIDs() { // 遍历消息 ID 列表。
 			// 防止远程对等节点在单个 IHAVE 消息中发送过多消息 ID
 			if msgIdx >= gs.params.MaxIHaveLength { // 如果消息数量超过限制，忽略剩余消息。
-				logrus.Debugf("IHAVE: peer %s has sent IHAVE on topic %s with too many messages (%d); ignoring remaining msgs", p, topic, len(ihave.MessageIDs)) // 记录忽略消息的调试信息。
-				break checkIwantMsgsLoop                                                                                                                         // 跳出消息循环。
+				logger.Debugf("IHAVE: 对等节点 %s 在主题 %s 上发送了太多消息 (%d); 忽略剩余消息", p, topic, len(ihave.MessageIDs)) // 记录忽略消息的调试信息。
+				break checkIwantMsgsLoop                                                                      // 跳出消息循环。
 			}
 
 			if gs.p.seenMessage(mid) { // 如果消息 ID 已被看到，跳过此消息。
@@ -824,7 +831,7 @@ func (gs *GossipSubRouter) handleIHave(p peer.ID, ctl *pb.ControlMessage) []*pb.
 		iask = gs.params.MaxIHaveLength - gs.iasked[p]
 	}
 
-	logrus.Debugf("IHAVE: Asking for %d out of %d messages from %s", iask, len(iwant), p) // 记录请求消息的调试信息。
+	logger.Debugf("IHAVE: 向对等节点 %s 请求 %d 条消息中的 %d 条", p, len(iwant), iask) // 记录请求消息的调试信息。
 
 	iwantlst := make([]string, 0, len(iwant)) // 创建一个字符串切片，用于存储请求的消息 ID。
 	for mid := range iwant {                  // 将消息 ID 添加到列表中。
@@ -854,8 +861,8 @@ func (gs *GossipSubRouter) handleIWant(p peer.ID, ctl *pb.ControlMessage) []*pb.
 	// 不响应评分低于 gossip 阈值的对等节点的 IWANT 请求
 	score := gs.score.Score(p)      // 获取对等节点的评分。
 	if score < gs.gossipThreshold { // 如果评分低于 gossip 阈值，忽略此对等节点的 IWANT 请求。
-		logrus.Debugf("IWANT: ignoring peer %s with score below threshold [score = %f]", p, score) // 记录忽略请求的调试信息。
-		return nil                                                                                 // 返回空消息列表。
+		logger.Debugf("IWANT: 忽略评分低于阈值的对等节点 %s [score = %f]", p, score) // 记录忽略请求的调试信息。
+		return nil                                                      // 返回空消息列表。
 	}
 
 	ihave := make(map[string]*pb.Message)  // 创建一个空的 map，用于存储需要发送的消息。
@@ -871,7 +878,7 @@ func (gs *GossipSubRouter) handleIWant(p peer.ID, ctl *pb.ControlMessage) []*pb.
 			}
 
 			if count > gs.params.GossipRetransmission { // 如果消息已被请求次数超过了限制，忽略此请求。
-				logrus.Debugf("IWANT: Peer %s has asked for message %s too many times; ignoring request", p, mid) // 记录忽略请求的调试信息。
+				logger.Debugf("IWANT: 对等节点 %s 请求消息 %s 次数过多; 忽略请求", p, mid) // 记录忽略请求的调试信息。
 				continue
 			}
 
@@ -883,7 +890,7 @@ func (gs *GossipSubRouter) handleIWant(p peer.ID, ctl *pb.ControlMessage) []*pb.
 		return nil
 	}
 
-	logrus.Debugf("IWANT: Sending %d messages to %s", len(ihave), p) // 记录发送消息的调试信息。
+	logger.Debugf("IWANT: 向对等节点 %s 发送 %d 条消息", p, len(ihave)) // 记录发送消息的调试信息。
 
 	msgs := make([]*pb.Message, 0, len(ihave)) // 创建一个消息切片，用于存储将要发送的消息。
 	for _, msg := range ihave {                // 将消息添加到消息列表中。
@@ -931,7 +938,7 @@ func (gs *GossipSubRouter) handleGraft(p peer.ID, ctl *pb.ControlMessage) []*pb.
 		// 我们不会对直接对等节点进行 GRAFT；如果发生这种情况，请大声抱怨。
 		_, direct := gs.direct[p] // 检查对等节点是否为直接对等节点。
 		if direct {               // 如果对等节点是直接对等节点。
-			logrus.Warnf("GRAFT: ignoring request from direct peer %s", p) // 记录警告信息，忽略来自直接对等节点的 GRAFT 请求。
+			logger.Warnf("GRAFT: 忽略来自直接对等节点 %s 的请求", p) // 记录警告信息，忽略来自直接对等节点的 GRAFT 请求。
 			// 这可能是非对称配置的错误；发送 PRUNE。
 			prune = append(prune, topic) // 将主题添加到 PRUNE 列表中。
 			// 但不进行 PX。
@@ -942,7 +949,7 @@ func (gs *GossipSubRouter) handleGraft(p peer.ID, ctl *pb.ControlMessage) []*pb.
 		// 确保我们没有回避该对等节点。
 		expire, backoff := gs.backoff[topic][p] // 获取该主题下对等节点的回退时间。
 		if backoff && now.Before(expire) {      // 如果对等节点处于回退期，并且当前时间在回退时间之前。
-			logrus.Debugf("GRAFT: ignoring backed off peer %s", p) // 记录调试信息，忽略此对等节点的 GRAFT 请求。
+			logger.Debugf("GRAFT: 忽略回退的对等节点 %s", p) // 记录调试信息，忽略此对等节点的 GRAFT 请求。
 			// 添加行为惩罚。
 			gs.score.AddPenalty(p, 1) // 对该对等节点添加惩罚。
 			// 不进行 PX。
@@ -962,7 +969,7 @@ func (gs *GossipSubRouter) handleGraft(p peer.ID, ctl *pb.ControlMessage) []*pb.
 		// 检查评分。
 		if score < 0 { // 如果对等节点的评分为负。
 			// 我们不会 GRAFT 评分为负的对等节点。
-			logrus.Debugf("GRAFT: ignoring peer %s with negative score [score = %f, topic = %s]", p, score, topic) // 记录调试信息，忽略此对等节点的 GRAFT 请求。
+			logger.Debugf("GRAFT: 忽略评分低于 0 的对等节点 %s [score = %f, topic = %s]", p, score, topic) // 记录调试信息，忽略此对等节点的 GRAFT 请求。
 			// 我们确实发送 PRUNE，因为这是协议正确性的问题。
 			prune = append(prune, topic) // 将主题添加到 PRUNE 列表中。
 			// 但我们不会 PX 给它们。
@@ -980,9 +987,9 @@ func (gs *GossipSubRouter) handleGraft(p peer.ID, ctl *pb.ControlMessage) []*pb.
 			continue                       // 跳过此节点。
 		}
 
-		logrus.Debugf("GRAFT: add mesh link from %s in %s", p, topic) // 记录调试信息，添加对等节点到网格中。
-		gs.tracer.Graft(p, topic)                                     // 记录 GRAFT 操作。
-		peers[p] = struct{}{}                                         // 将对等节点添加到网格中。
+		logger.Debugf("GRAFT: 从对等节点 %s 添加网格链接到主题 %s", p, topic) // 记录调试信息，添加对等节点到网格中。
+		gs.tracer.Graft(p, topic)                               // 记录 GRAFT 操作。
+		peers[p] = struct{}{}                                   // 将对等节点添加到网格中。
 	}
 
 	if len(prune) == 0 { // 如果没有需要 PRUNE 的主题。
@@ -1011,9 +1018,9 @@ func (gs *GossipSubRouter) handlePrune(p peer.ID, ctl *pb.ControlMessage) {
 			continue // 跳过此节点。
 		}
 
-		logrus.Debugf("PRUNE: Remove mesh link to %s in %s", p, topic) // 记录调试信息，从网格中移除对等节点。
-		gs.tracer.Prune(p, topic)                                      // 记录 PRUNE 操作。
-		delete(peers, p)                                               // 从网格中删除对等节点。
+		logger.Debugf("PRUNE: 从网格中移除对等节点 %s 到主题 %s", p, topic) // 记录调试信息，从网格中移除对等节点。
+		gs.tracer.Prune(p, topic)                              // 记录 PRUNE 操作。
+		delete(peers, p)                                       // 从网格中删除对等节点。
 		// 对等节点是否指定了回退时间？如果是，请遵守。
 		backoff := prune.GetBackoff() // 获取 PRUNE 消息中的回退时间。
 		if backoff > 0 {              // 如果回退时间大于 0。
@@ -1026,8 +1033,8 @@ func (gs *GossipSubRouter) handlePrune(p peer.ID, ctl *pb.ControlMessage) {
 		if len(px) > 0 {       // 如果对等节点列表不为空。
 			// 忽略评分不足的对等节点的 PX。
 			if score < gs.acceptPXThreshold { // 如果对等节点的评分低于接受 PX 的阈值。
-				logrus.Debugf("PRUNE: ignoring PX from peer %s with insufficient score [score = %f, topic = %s]", p, score, topic) // 记录调试信息，忽略该对等节点的 PX。
-				continue                                                                                                           // 跳过此节点。
+				logger.Debugf("PRUNE: 忽略评分不足的对等节点 %s 的 PX [score = %f, topic = %s]", p, score, topic) // 记录调试信息，忽略该对等节点的 PX。
+				continue                                                                              // 跳过此节点。
 			}
 
 			gs.pxConnect(px) // 连接 PX 对等节点。
@@ -1089,17 +1096,17 @@ func (gs *GossipSubRouter) pxConnect(peers []*pb.PeerInfo) {
 			// 对等节点发送了签名记录；确保其有效。
 			envelope, r, err := record.ConsumeEnvelope(pi.SignedPeerRecord, peer.PeerRecordEnvelopeDomain) // 解析签名记录。
 			if err != nil {                                                                                // 如果解析失败。
-				logrus.Warnf("error unmarshalling peer record obtained through px: %s", err) // 记录警告信息，忽略此对等节点。
-				continue                                                                     // 跳过此节点。
+				logger.Warnf("通过 px 获取的对等节点记录解析失败: %s", err) // 记录警告信息，忽略此对等节点。
+				continue                                     // 跳过此节点。
 			}
 			rec, ok := r.(*peer.PeerRecord) // 类型断言，检查记录是否为 PeerRecord 类型。
 			if !ok {                        // 如果记录不是 PeerRecord 类型。
-				logrus.Warnf("bogus peer record obtained through px: envelope payload is not PeerRecord") // 记录警告信息，忽略此对等节点。
-				continue                                                                                  // 跳过此节点。
+				logger.Warnf("通过 px 获取的对等节点记录解析失败: 记录的 payload 不是 PeerRecord") // 记录警告信息，忽略此对等节点。
+				continue                                                       // 跳过此节点。
 			}
 			if rec.PeerID != p { // 如果记录中的对等节点 ID 与预期的不匹配。
-				logrus.Warnf("bogus peer record obtained through px: peer ID %s doesn't match expected peer %s", rec.PeerID, p) // 记录警告信息，忽略此对等节点。
-				continue                                                                                                        // 跳过此节点。
+				logger.Warnf("通过 px 获取的对等节点记录解析失败: 记录的对等节点 ID %s 与预期的不匹配 %s", rec.PeerID, p) // 记录警告信息，忽略此对等节点。
+				continue                                                                     // 跳过此节点。
 			}
 			spr = envelope // 将有效的签名记录存储到 spr 变量中。
 		}
@@ -1115,7 +1122,7 @@ func (gs *GossipSubRouter) pxConnect(peers []*pb.PeerInfo) {
 		select {
 		case gs.connect <- ci: // 将连接信息发送到连接通道中。
 		default: // 如果连接通道已满。
-			logrus.Debugf("ignoring peer connection attempt; too many pending connections") // 记录调试信息，忽略连接请求。
+			logger.Debugf("忽略对等节点的连接尝试; 太多等待连接") // 记录调试信息，忽略连接请求。
 		}
 	}
 }
@@ -1129,12 +1136,12 @@ func (gs *GossipSubRouter) connector() {
 				continue // 如果对等节点已连接，跳过此节点。
 			}
 
-			logrus.Debugf("connecting to %s", ci.p)           // 记录调试信息，开始连接对等节点。
+			logger.Debugf("开始连接对等节点 %s", ci.p)                // 记录调试信息，开始连接对等节点。
 			cab, ok := peerstore.GetCertifiedAddrBook(gs.cab) // 获取认证地址簿。
 			if ok && ci.spr != nil {                          // 如果获取认证地址簿成功，并且签名记录不为空。
 				_, err := cab.ConsumePeerRecord(ci.spr, peerstore.TempAddrTTL) // 消费签名记录，并设置临时 TTL。
 				if err != nil {                                                // 如果消费失败。
-					logrus.Debugf("error processing peer record: %s", err) // 记录调试信息，忽略此错误。
+					logger.Debugf("处理对等节点记录失败: %s", err) // 记录调试信息，忽略此错误。
 				}
 			}
 
@@ -1142,7 +1149,7 @@ func (gs *GossipSubRouter) connector() {
 			err := gs.p.host.Connect(ctx, peer.AddrInfo{ID: ci.p, Addrs: gs.cab.Addrs(ci.p)}) // 连接对等节点。
 			cancel()                                                                          // 取消上下文。
 			if err != nil {                                                                   // 如果连接失败。
-				logrus.Debugf("error connecting to %s: %s", ci.p, err) // 记录调试信息，忽略此错误。
+				logger.Debugf("连接对等节点 %s 失败: %s", ci.p, err) // 记录调试信息，忽略此错误。
 			}
 
 		case <-gs.p.ctx.Done(): // 检查上下文是否已取消。
@@ -1235,7 +1242,7 @@ func (gs *GossipSubRouter) Join(topic string) {
 		return // 返回，结束函数执行。
 	}
 
-	logrus.Debugf("JOIN %s", topic) // 记录调试信息，加入主题。
+	logger.Debugf("加入主题 %s", topic) // 记录调试信息，加入主题。
 	gs.tracer.Join(topic)           // 记录加入操作。
 
 	gmap, ok = gs.fanout[topic] // 获取该主题的 fanout 对等节点集合。
@@ -1278,9 +1285,9 @@ func (gs *GossipSubRouter) Join(topic string) {
 	}
 
 	for p := range gmap { // 遍历网格对等节点集合。
-		logrus.Debugf("JOIN: Add mesh link to %s in %s", p, topic) // 记录调试信息，添加对等节点到网格中。
-		gs.tracer.Graft(p, topic)                                  // 记录 GRAFT 操作。
-		gs.sendGraft(p, topic)                                     // 发送 GRAFT 消息。
+		logger.Debugf("添加网格链接到对等节点 %s 到主题 %s", p, topic) // 记录调试信息，添加对等节点到网格中。
+		gs.tracer.Graft(p, topic)                        // 记录 GRAFT 操作。
+		gs.sendGraft(p, topic)                           // 发送 GRAFT 消息。
 	}
 }
 
@@ -1293,15 +1300,15 @@ func (gs *GossipSubRouter) Leave(topic string) {
 		return // 返回，结束函数执行。
 	}
 
-	logrus.Debugf("LEAVE %s", topic) // 记录调试信息，离开主题。
-	gs.tracer.Leave(topic)           // 记录离开操作。
+	logger.Debugf("离开主题 %s", topic) // 记录调试信息，离开主题。
+	gs.tracer.Leave(topic)          // 记录离开操作。
 
 	delete(gs.mesh, topic) // 从网格集合中删除该主题。
 
 	for p := range gmap { // 遍历网格对等节点集合。
-		logrus.Debugf("LEAVE: Remove mesh link to %s in %s", p, topic) // 记录调试信息，从网格中移除对等节点。
-		gs.tracer.Prune(p, topic)                                      // 记录 PRUNE 操作。
-		gs.sendPrune(p, topic, true)                                   // 发送 PRUNE 消息。
+		logger.Debugf("从网格中移除对等节点 %s 到主题 %s", p, topic) // 记录调试信息，从网格中移除对等节点。
+		gs.tracer.Prune(p, topic)                       // 记录 PRUNE 操作。
+		gs.sendPrune(p, topic, true)                    // 发送 PRUNE 消息。
 		// 添加回退，以防我们在回退期结束前重新加入该主题时急切地重新 GRAFT 该对等节点。
 		gs.addBackoff(p, topic, true) // 添加回退时间。
 	}
@@ -1372,8 +1379,8 @@ func (gs *GossipSubRouter) sendRPC(p peer.ID, out *RPC) {
 	for _, rpc := range outRPCs {                               // 遍历拆分后的 RPC 消息。
 		if rpc.Size() > gs.p.maxMessageSize { // 如果拆分后的 RPC 消息仍然大于最大消息大小。
 			// 这仅在单个消息/控制大于 maxMessageSize 时发生。
-			gs.doDropRPC(out, p, fmt.Sprintf("Dropping oversized RPC. Size: %d, limit: %d. (Over by %d bytes)", rpc.Size(), gs.p.maxMessageSize, rpc.Size()-gs.p.maxMessageSize)) // 丢弃超大消息，并记录调试信息。
-			continue                                                                                                                                                              // 跳过此消息。
+			gs.doDropRPC(out, p, fmt.Sprintf("丢弃超大消息. 大小: %d, 限制: %d. (超过 %d 字节)", rpc.Size(), gs.p.maxMessageSize, rpc.Size()-gs.p.maxMessageSize)) // 丢弃超大消息，并记录调试信息。
+			continue                                                                                                                                 // 跳过此消息。
 		}
 		gs.doSendRPC(rpc, p, mch) // 发送拆分后的 RPC 消息到对等节点。
 	}
@@ -1385,8 +1392,8 @@ func (gs *GossipSubRouter) sendRPC(p peer.ID, out *RPC) {
 //   - p: peer.ID 类型，对等节点 ID。
 //   - reason: string 类型，表示丢弃原因。
 func (gs *GossipSubRouter) doDropRPC(rpc *RPC, p peer.ID, reason string) {
-	logrus.Debugf("dropping message to peer %s: %s", p, reason) // 记录调试信息，丢弃消息并说明原因。
-	gs.tracer.DropRPC(rpc, p)                                   // 记录丢弃 RPC 消息的操作。
+	logger.Debugf("丢弃消息到对等节点 %s: %s", p, reason) // 记录调试信息，丢弃消息并说明原因。
+	gs.tracer.DropRPC(rpc, p)                    // 记录丢弃 RPC 消息的操作。
 	// 推送需要重试的控制消息。
 	ctl := rpc.GetControl() // 获取 RPC 消息中的控制消息。
 	if ctl != nil {         // 如果控制消息不为空。
@@ -1404,7 +1411,7 @@ func (gs *GossipSubRouter) doSendRPC(rpc *RPC, p peer.ID, mch chan *RPC) {
 	case mch <- rpc: // 将 RPC 消息发送到对等节点的消息通道中。
 		gs.tracer.SendRPC(rpc, p) // 记录发送 RPC 消息的操作。
 	default: // 如果消息通道已满。
-		gs.doDropRPC(rpc, p, "queue full") // 丢弃消息并说明原因。
+		gs.doDropRPC(rpc, p, "队列已满") // 丢弃消息并说明原因。
 	}
 }
 
@@ -1574,7 +1581,7 @@ func (gs *GossipSubRouter) heartbeat() {
 		if gs.params.SlowHeartbeatWarning > 0 { // 检查是否设置了慢心跳警告时间。
 			slowWarning := time.Duration(gs.params.SlowHeartbeatWarning * float64(gs.params.HeartbeatInterval)) // 计算慢心跳警告时间。
 			if dt := time.Since(start); dt > slowWarning {                                                      // 检查心跳执行时间是否超过警告阈值。
-				logrus.Warnf("slow heartbeat took %v", dt) // 记录心跳过慢的警告。
+				logger.Warnf("心跳过慢: %v", dt) // 记录心跳过慢的警告。
 			}
 		}
 	}()
@@ -1619,19 +1626,19 @@ func (gs *GossipSubRouter) heartbeat() {
 		}
 
 		graftPeer := func(p peer.ID) {
-			logrus.Debugf("HEARTBEAT: Add mesh link to %s in %s", p, topic) // 记录调试信息，添加该对等节点到网格中。
-			gs.tracer.Graft(p, topic)                                       // 记录 GRAFT 操作。
-			peers[p] = struct{}{}                                           // 将该对等节点添加到网格中。
-			topics := tograft[p]                                            // 获取该对等节点的 GRAFT 主题列表。
-			tograft[p] = append(topics, topic)                              // 将主题添加到 GRAFT 列表中。
+			logger.Debugf("添加网格链接到对等节点 %s 到主题 %s", p, topic) // 记录调试信息，添加该对等节点到网格中。
+			gs.tracer.Graft(p, topic)                        // 记录 GRAFT 操作。
+			peers[p] = struct{}{}                            // 将该对等节点添加到网格中。
+			topics := tograft[p]                             // 获取该对等节点的 GRAFT 主题列表。
+			tograft[p] = append(topics, topic)               // 将主题添加到 GRAFT 列表中。
 		}
 
 		// 删除所有评分为负的对等节点，不进行 PX。
 		for p := range peers {
 			if score(p) < 0 { // 如果对等节点评分为负。
-				logrus.Debugf("HEARTBEAT: Prune peer %s with negative score [score = %f, topic = %s]", p, score(p), topic) // 记录调试信息，PRUNE 该对等节点。
-				prunePeer(p)                                                                                               // 执行 PRUNE 操作。
-				noPX[p] = true                                                                                             // 标记该对等节点不进行 PX。
+				logger.Debugf("PRUNE 对等节点 %s 评分低于 0 [评分 = %f, 主题 = %s]", p, score(p), topic) // 记录调试信息，PRUNE 该对等节点。
+				prunePeer(p)                                                                 // 执行 PRUNE 操作。
+				noPX[p] = true                                                               // 标记该对等节点不进行 PX。
 			}
 		}
 
@@ -1710,8 +1717,8 @@ func (gs *GossipSubRouter) heartbeat() {
 
 			// 修剪多余的对等节点。
 			for _, p := range plst[gs.params.D:] { // 遍历多余的对等节点。
-				logrus.Debugf("HEARTBEAT: Remove mesh link to %s in %s", p, topic) // 记录调试信息，PRUNE 该对等节点。
-				prunePeer(p)                                                       // 执行 PRUNE 操作。
+				logger.Debugf("从网格中移除对等节点 %s 到主题 %s", p, topic) // 记录调试信息，PRUNE 该对等节点。
+				prunePeer(p)                                    // 执行 PRUNE 操作。
 			}
 		}
 
@@ -1769,8 +1776,8 @@ func (gs *GossipSubRouter) heartbeat() {
 				})
 
 				for _, p := range plst {
-					logrus.Debugf("HEARTBEAT: Opportunistically graft peer %s on topic %s", p, topic) // 记录调试信息，GRAFT 该对等节点。
-					graftPeer(p)                                                                      // 执行 GRAFT 操作。
+					logger.Debugf("机会性 GRAFT 对等节点 %s 到主题 %s", p, topic) // 记录调试信息，GRAFT 该对等节点。
+					graftPeer(p)                                        // 执行 GRAFT 操作。
 				}
 			}
 		}
@@ -1843,8 +1850,8 @@ func (gs *GossipSubRouter) clearIHaveCounters() {
 // applyIwantPenalties 应用 IWANT 请求惩罚。
 func (gs *GossipSubRouter) applyIwantPenalties() {
 	for p, count := range gs.gossipTracer.GetBrokenPromises() { // 遍历所有未遵守 IWANT 请求的对等节点。
-		logrus.Infof("peer %s didn't follow up in %d IWANT requests; adding penalty", p, count) // 记录信息，说明哪个对等节点未遵守 IWANT 请求以及对应的次数。
-		gs.score.AddPenalty(p, count)                                                           // 根据未遵守的次数为该对等节点添加惩罚分。
+		logger.Infof("对等节点 %s 未遵守 %d 次 IWANT 请求; 添加惩罚", p, count) // 记录信息，说明哪个对等节点未遵守 IWANT 请求以及对应的次数。
+		gs.score.AddPenalty(p, count)                             // 根据未遵守的次数为该对等节点添加惩罚分。
 	}
 }
 
@@ -1949,7 +1956,7 @@ func (gs *GossipSubRouter) emitGossip(topic string, exclude map[peer.ID]struct{}
 	// 如果我们发出的 mids 超过 GossipSubMaxIHaveLength，则截断列表。
 	if len(mids) > gs.params.MaxIHaveLength { // 如果消息 ID 的数量超过最大限制。
 		// 我们在每个对等节点上进行截断。
-		logrus.Debugf("too many messages for gossip; will truncate IHAVE list (%d messages)", len(mids)) // 记录调试信息，说明将对消息 ID 列表进行截断。
+		logger.Debugf("gossip 消息太多; 将截断 IHAVE 列表 (%d 条消息)", len(mids)) // 记录调试信息，说明将对消息 ID 列表进行截断。
 	}
 
 	// 将 gossip 发送给高于阈值的 GossipFactor 对等节点，最少为 D_lazy。
@@ -2139,7 +2146,7 @@ func (gs *GossipSubRouter) makePrune(p peer.ID, topic string, doPX bool, isUnsub
 				if spr != nil { // 如果签名记录存在。
 					recordBytes, err = spr.Marshal() // 将签名记录序列化为字节数组。
 					if err != nil {                  // 如果序列化失败。
-						logrus.Warnf("error marshaling signed peer record for %s: %s", p, err) // 记录警告信息。
+						logger.Warnf("序列化签名对等节点记录失败: %s", err) // 记录警告信息。
 					}
 				}
 			}

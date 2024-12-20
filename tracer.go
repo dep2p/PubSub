@@ -12,9 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	pb "github.com/dep2p/pubsub/pb"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -67,7 +66,7 @@ func (t *basicTracer) Trace(evt *pb.TraceEvent) {
 	}
 
 	if t.lossy && len(t.buf) > TraceBufferSize {
-		logrus.Debug("trace buffer overflow; dropping trace event")
+		logger.Debug("追踪缓冲区溢出；丢弃追踪事件")
 	} else {
 		t.buf = append(t.buf, evt) // 添加事件到缓冲区
 	}
@@ -142,7 +141,7 @@ func (t *JSONTracer) doWrite() {
 		for i, evt := range buf {
 			err := enc.Encode(evt) // 编码事件并写入
 			if err != nil {
-				logrus.Warnf("error writing event trace: %s", err.Error())
+				logger.Warnf("写入追踪事件失败: %s", err.Error())
 			}
 			buf[i] = nil // 清空缓冲区
 		}
@@ -211,7 +210,7 @@ func (t *PBTracer) doWrite() {
 		for i, evt := range buf {
 			err := w.WriteMsg(evt) // 编码事件并写入
 			if err != nil {
-				logrus.Warnf("error writing event trace: %s", err.Error())
+				logger.Warnf("写入追踪事件失败: %s", err.Error())
 			}
 			buf[i] = nil // 清空缓冲区
 		}
@@ -272,7 +271,7 @@ func (t *RemoteTracer) doWrite() {
 	// 打开一个流，用于发送追踪事件
 	s, err := t.openStream()
 	if err != nil {
-		logrus.Debugf("打开远程追踪器流时出错: %s", err.Error())
+		logger.Debugf("打开远程追踪器流时出错: %s", err.Error())
 		return
 	}
 
@@ -315,14 +314,14 @@ func (t *RemoteTracer) doWrite() {
 		// 将批次写入流
 		err = w.WriteMsg(&batch)
 		if err != nil {
-			logrus.Debugf("写入追踪事件批次时出错: %s", err)
+			logger.Debugf("写入追踪事件批次时出错: %s", err)
 			goto end
 		}
 
 		// 刷新gzip写入器，确保数据被压缩并写入流
 		err = gzipW.Flush()
 		if err != nil {
-			logrus.Debugf("刷新gzip流时出错: %s", err)
+			logger.Debugf("刷新gzip流时出错: %s", err)
 			goto end
 		}
 
@@ -348,7 +347,7 @@ func (t *RemoteTracer) doWrite() {
 			s.Reset() // 重置流
 			s, err = t.openStream()
 			if err != nil {
-				logrus.Debugf("打开远程追踪器流时出错: %s", err.Error())
+				logger.Debugf("打开远程追踪器流时出错: %s", err.Error())
 				return
 			}
 

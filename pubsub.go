@@ -13,11 +13,10 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/dep2p/pubsub/timecache"
 
 	pb "github.com/dep2p/pubsub/pb"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/discovery"
@@ -747,16 +746,16 @@ func (p *PubSub) processLoop(ctx context.Context) {
 
 			ch, ok := p.peers[pid] // 检查是否为已知 peer
 			if !ok {
-				logrus.Warn("new stream for unknown peer: ", pid) // 记录未知 peer 的新流
-				s.Reset()                                         // 重置流
+				logger.Warnf("新流来自未知节点: %s", pid) // 记录未知 peer 的新流
+				s.Reset()                         // 重置流
 				continue
 			}
 
 			if p.blacklist.Contains(pid) { // 如果 peer 在黑名单中
-				logrus.Warn("closing stream for blacklisted peer: ", pid) // 记录黑名单 peer 的流
-				close(ch)                                                 // 关闭通道
-				delete(p.peers, pid)                                      // 从 peers 中删除
-				s.Reset()                                                 // 重置流
+				logger.Warnf("关闭黑名单节点 %s 的流", pid) // 记录黑名单 peer 的流
+				close(ch)                          // 关闭通道
+				delete(p.peers, pid)               // 从 peers 中删除
+				s.Reset()                          // 重置流
 				continue
 			}
 
@@ -827,8 +826,8 @@ func (p *PubSub) processLoop(ctx context.Context) {
 			thunk() // 执行评估函数
 
 		case pid := <-p.blacklistPeer: // 处理黑名单 peer 请求
-			logrus.Infof("Blacklisting peer %s", pid) // 记录黑名单操作
-			p.blacklist.Add(pid)                      // 添加到黑名单
+			logger.Infof("将节点 %s 加入黑名单", pid) // 记录黑名单操作
+			p.blacklist.Add(pid)              // 添加到黑名单
 
 			ch, ok := p.peers[pid] // 检查 peer 是否存在
 			if ok {
@@ -844,8 +843,8 @@ func (p *PubSub) processLoop(ctx context.Context) {
 			}
 
 		case <-ctx.Done(): // 处理上下文完成事件
-			logrus.Info("pubsub processloop shutting down") // 记录进程循环关闭
-			return                                          // 退出函数
+			logger.Info("pubsub 进程循环关闭") // 记录进程循环关闭
+			return                       // 退出函数
 		}
 	}
 }
@@ -870,13 +869,13 @@ func (p *PubSub) handlePendingPeers() {
 		}
 
 		if _, ok := p.peers[pid]; ok { // 检查 peer 是否已存在
-			logrus.Debug("already have connection to peer: ", pid) // 记录已连接的 peer
-			continue                                               // 如果已连接，跳过
+			logger.Debugf("已连接到节点 %s", pid) // 记录已连接的 peer
+			continue                        // 如果已连接，跳过
 		}
 
 		if p.blacklist.Contains(pid) { // 检查 peer 是否在黑名单中
-			logrus.Warn("ignoring connection from blacklisted peer: ", pid) // 记录黑名单 peer
-			continue                                                        // 如果在黑名单中，跳过
+			logger.Warnf("忽略来自黑名单节点 %s 的连接", pid) // 记录黑名单 peer
+			continue                              // 如果在黑名单中，跳过
 		}
 
 		messages := make(chan *RPC, p.peerOutboundQueueSize) // 创建消息通道，大小为 peerOutboundQueueSize
@@ -920,17 +919,17 @@ func (p *PubSub) handleDeadPeers() {
 		if p.host.Network().Connectedness(pid) == network.Connected { // 如果 peer 仍然连接
 			backoffDelay, err := p.deadPeerBackoff.updateAndGet(pid) // 获取退避延迟时间
 			if err != nil {
-				logrus.Debug(err) // 记录错误
+				logger.Debug(err) // 记录错误
 				continue          // 跳过
 			}
 
 			// 仍然连接，必须是重复连接被关闭。
 			// 我们重新启动 writer，因为我们需要确保有一个活动的流
-			logrus.Debugf("peer declared dead but still connected; respawning writer: %s", pid) // 记录重新生成 writer 的操作
-			messages := make(chan *RPC, p.peerOutboundQueueSize)                                // 创建新的消息通道
-			messages <- p.getHelloPacket()                                                      // 发送 hello 包
-			p.peers[pid] = messages                                                             // 将消息通道添加到 peers
-			go p.handleNewPeerWithBackoff(p.ctx, pid, backoffDelay, messages)                   // 启动新的 goroutine 处理带退避延迟的新 peer
+			logger.Debugf("节点 %s 声明死亡但仍然连接; 重新生成 writer", pid)                // 记录重新生成 writer 的操作
+			messages := make(chan *RPC, p.peerOutboundQueueSize)              // 创建新的消息通道
+			messages <- p.getHelloPacket()                                    // 发送 hello 包
+			p.peers[pid] = messages                                           // 将消息通道添加到 peers
+			go p.handleNewPeerWithBackoff(p.ctx, pid, backoffDelay, messages) // 启动新的 goroutine 处理带退避延迟的新 peer
 		}
 	}
 }
@@ -974,7 +973,7 @@ func (p *PubSub) handleRemoveTopic(req *rmTopicReq) {
 		return
 	}
 
-	req.resp <- fmt.Errorf("cannot close topic: outstanding event handlers or subscriptions") // 不能关闭主题的错误
+	req.resp <- fmt.Errorf("无法关闭主题: 存在事件处理程序或订阅") // 不能关闭主题的错误
 }
 
 // handleRemoveSubscription 从账本中移除订阅。
@@ -1113,7 +1112,7 @@ func (p *PubSub) announce(topic string, sub bool) {
 		case peer <- out: // 发送 RPC 给 peer
 			p.tracer.SendRPC(out, pid) // 追踪发送的 RPC
 		default:
-			logrus.Infof("Can't send announce message to peer %s: queue full; scheduling retry", pid)
+			logger.Infof("无法发送宣布消息到节点 %s: 队列已满; 调度重试", pid)
 			p.tracer.DropRPC(out, pid)          // 追踪丢弃的 RPC
 			go p.announceRetry(pid, topic, sub) // 调度重试
 		}
@@ -1166,7 +1165,7 @@ func (p *PubSub) doAnnounceRetry(pid peer.ID, topic string, sub bool) {
 	case peer <- out: // 发送 RPC 给 peer
 		p.tracer.SendRPC(out, pid) // 追踪发送的 RPC
 	default:
-		logrus.Infof("Can't send announce message to peer %s: queue full; scheduling retry", pid)
+		logger.Infof("无法发送宣布消息到节点 %s: 队列已满; 调度重试", pid)
 		p.tracer.DropRPC(out, pid)          // 追踪丢弃的 RPC
 		go p.announceRetry(pid, topic, sub) // 调度重试
 	}
@@ -1195,7 +1194,7 @@ func (p *PubSub) notifySubs(msg *Message) {
 		case f.ch <- msg: // 发送消息给订阅者
 		default:
 			p.tracer.UndeliverableMessage(msg) // 追踪未能递送的消息
-			logrus.Infof("无法递送消息到主题 %s 的订阅者; 订阅者处理速度过慢", topic)
+			logger.Infof("无法递送消息到主题 %s 的订阅者; 订阅者处理速度过慢", topic)
 		}
 	}
 }
@@ -1205,7 +1204,7 @@ func (p *PubSub) notifySubs(msg *Message) {
 //   - msg: 要处理的响应消息
 func (p *PubSub) handleResponse(msg *Message) {
 	if msg.Metadata == nil || msg.Metadata.MessageID == "" {
-		logrus.Warn("收到的响应消息缺少有效的元数据或消息ID")
+		logger.Warn("收到的响应消息缺少有效的元数据或消息ID")
 		return
 	}
 
@@ -1300,7 +1299,7 @@ func (p *PubSub) handleIncomingRPC(rpc *RPC) {
 		// 检查 RPC 是否被外部检查器允许
 		if err := p.appSpecificRpcInspector(rpc.from, rpc); err != nil {
 			// 如果检查失败，记录调试信息并拒绝该 RPC
-			logrus.Debugf("应用程序特定的检查失败，拒绝传入的 RPC: %s", err)
+			logger.Debugf("应用程序特定的检查失败，拒绝传入的 RPC: %s", err)
 			return // 拒绝该 RPC
 		}
 	}
@@ -1317,7 +1316,7 @@ func (p *PubSub) handleIncomingRPC(rpc *RPC) {
 		subs, err = p.subFilter.FilterIncomingSubscriptions(rpc.from, subs)
 		if err != nil {
 			// 如果过滤器发生错误，记录调试信息并忽略该 RPC
-			logrus.Debugf("订阅过滤器错误: %s; 忽略 RPC", err)
+			logger.Debugf("订阅过滤器错误: %s; 忽略 RPC", err)
 			return
 		}
 	}
@@ -1363,13 +1362,13 @@ func (p *PubSub) handleIncomingRPC(rpc *RPC) {
 	switch p.rt.AcceptFrom(rpc.from) {
 	case AcceptNone:
 		// 如果路由器将该 peer 标记为灰名单，丢弃该 RPC
-		logrus.Debugf("接收到来自路由器灰名单 peer %s 的 RPC; 丢弃 RPC", rpc.from)
+		logger.Debugf("接收到来自路由器灰名单 peer %s 的 RPC; 丢弃 RPC", rpc.from)
 		return
 
 	case AcceptControl:
 		// 如果路由器只接受控制消息，忽略负载消息
 		if len(rpc.GetPublish()) > 0 {
-			logrus.Debugf("peer %s 被路由器限制; 忽略 %d 个负载消息", rpc.from, len(rpc.GetPublish()))
+			logger.Debugf("peer %s 被路由器限制; 忽略 %d 个负载消息", rpc.from, len(rpc.GetPublish()))
 		}
 		// 对该 peer 进行流量限制，防止滥用
 		p.tracer.ThrottlePeer(rpc.from)
@@ -1380,7 +1379,7 @@ func (p *PubSub) handleIncomingRPC(rpc *RPC) {
 			// 检查消息是否属于已订阅的主题，或是否可以中继消息
 			if !(p.subscribedToMsg(pmsg) || p.canRelayMsg(pmsg)) {
 				// 如果未订阅或无法中继，忽略该消息
-				logrus.Debug("接收到我们未订阅主题的消息; 忽略消息")
+				logger.Debug("接收到我们未订阅主题的消息; 忽略消息")
 				continue
 			}
 
@@ -1424,7 +1423,7 @@ func (p *PubSub) pushMsg(msg *Message) {
 	// 拒绝来自黑名单 peers 的消息
 	// 如果消息的来源节点在黑名单中，直接丢弃消息，并记录此操作
 	if p.blacklist.Contains(src) {
-		logrus.Debugf("丢弃来自黑名单 peer %s 的消息", src)
+		logger.Debugf("丢弃来自黑名单 peer %s 的消息", src)
 		// 记录被拒绝的消息
 		p.tracer.RejectMessage(msg, RejectBlacklstedPeer)
 		return
@@ -1433,7 +1432,7 @@ func (p *PubSub) pushMsg(msg *Message) {
 	// 即使消息是由良好 peers 转发的
 	// 如果消息的原始发送者在黑名单中，也丢弃消息
 	if p.blacklist.Contains(msg.GetFrom()) {
-		logrus.Debugf("丢弃来自黑名单来源 %s 的消息", src)
+		logger.Debugf("丢弃来自黑名单来源 %s 的消息", src)
 		// 记录被拒绝的消息
 		p.tracer.RejectMessage(msg, RejectBlacklistedSource)
 		return
@@ -1443,7 +1442,7 @@ func (p *PubSub) pushMsg(msg *Message) {
 	err := p.checkSigningPolicy(msg)
 	if err != nil {
 		// 如果签名检查失败，丢弃消息，并记录此操作
-		logrus.Debugf("丢弃来自 %s 的消息: %s", src, err)
+		logger.Debugf("丢弃来自 %s 的消息: %s", src, err)
 		return
 	}
 
@@ -1451,7 +1450,7 @@ func (p *PubSub) pushMsg(msg *Message) {
 	// 如果消息声称来自本节点，但实际是由其他节点转发的，则丢弃消息
 	self := p.host.ID()
 	if peer.ID(msg.GetFrom()) == self && src != self {
-		logrus.Debugf("丢弃声称来自自己但由 %s 转发的消息", src)
+		logger.Debugf("丢弃声称来自自己但由 %s 转发的消息", src)
 		// 记录被拒绝的消息
 		p.tracer.RejectMessage(msg, RejectSelfOrigin)
 		return

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	pb "github.com/dep2p/pubsub/pb"
 
 	"github.com/libp2p/go-libp2p/core/host"
@@ -18,7 +19,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/libp2p/go-libp2p/core/record"
-	"github.com/sirupsen/logrus"
 
 	"github.com/libp2p/go-msgio/protoio"
 )
@@ -133,7 +133,7 @@ func TestSparseGossipsub(t *testing.T) {
 				// 如果获取消息失败，则报告错误
 				t.Fatal(sub.err)
 			}
-			logrus.Printf("========== %s", got.Data)
+			logger.Printf("========== %s", got.Data)
 			// 验证接收到的消息是否与发布的消息一致
 			if !bytes.Equal(msg, got.Data) {
 				// 如果消息不一致，则报告错误

@@ -8,11 +8,11 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/discovery"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	discimpl "github.com/libp2p/go-libp2p/p2p/discovery/backoff"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -226,8 +226,8 @@ func (d *discover) Advertise(topic string) {
 	go func() { // 启动一个新的协程处理广告过程
 		next, err := d.discovery.Advertise(advertisingCtx, topic) // 在发现服务中广告该主题
 		if err != nil {                                           // 如果广告过程中出现错误
-			logrus.Warnf("bootstrap: error providing rendezvous for %s: %s", topic, err.Error()) // 记录警告日志
-			if next == 0 {                                                                       // 如果下一次广告间隔为0
+			logger.Warnf("bootstrap: 提供对等节点发现服务失败: %s", err.Error()) // 记录警告日志
+			if next == 0 {                                           // 如果下一次广告间隔为0
 				next = discoveryAdvertiseRetryInterval // 使用默认的广告重试间隔
 			}
 		}
@@ -240,8 +240,8 @@ func (d *discover) Advertise(topic string) {
 			case <-t.C: // 定时器触发
 				next, err = d.discovery.Advertise(advertisingCtx, topic) // 再次尝试广告该主题
 				if err != nil {                                          // 如果再次广告过程中出现错误
-					logrus.Warnf("bootstrap: error providing rendezvous for %s: %s", topic, err.Error()) // 记录警告日志
-					if next == 0 {                                                                       // 如果下一次广告间隔为0
+					logger.Warnf("提供对等节点发现服务失败: %s", err.Error()) // 记录警告日志
+					if next == 0 {                                // 如果下一次广告间隔为0
 						next = discoveryAdvertiseRetryInterval // 使用默认的广告重试间隔
 					}
 				}
@@ -360,7 +360,7 @@ func (d *discover) handleDiscovery(ctx context.Context, topic string, opts []dis
 
 	peerCh, err := d.discovery.FindPeers(discoverCtx, topic, opts...) // 使用发现服务查找对应主题的对等节点
 	if err != nil {
-		logrus.Debugf("error finding peers for topic %s: %v", topic, err) // 记录发现错误
+		logger.Debugf("发现对等节点失败: %v", err) // 记录发现错误
 		return
 	}
 

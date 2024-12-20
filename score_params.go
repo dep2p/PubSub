@@ -9,6 +9,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
@@ -30,29 +31,34 @@ func (p *PeerScoreThresholds) validate() error {
 	if !p.SkipAtomicValidation || p.PublishThreshold != 0 || p.GossipThreshold != 0 || p.GraylistThreshold != 0 {
 		// 验证 GossipThreshold 是否大于 0 或无效
 		if p.GossipThreshold > 0 || isInvalidNumber(p.GossipThreshold) {
-			return fmt.Errorf("invalid gossip threshold; it must be <= 0 and a valid number")
+			logger.Warnf("GossipThreshold 无效: %f", p.GossipThreshold) // GossipThreshold 无效
+			return fmt.Errorf("GossipThreshold 无效: %f", p.GossipThreshold)
 		}
 		// 验证 PublishThreshold 是否大于 0 或大于 GossipThreshold 或无效
 		if p.PublishThreshold > 0 || p.PublishThreshold > p.GossipThreshold || isInvalidNumber(p.PublishThreshold) {
-			return fmt.Errorf("invalid publish threshold; it must be <= 0 and <= gossip threshold and a valid number")
+			logger.Warnf("PublishThreshold 无效: %f", p.PublishThreshold) // PublishThreshold 无效
+			return fmt.Errorf("PublishThreshold 无效: %f", p.PublishThreshold)
 		}
 		// 验证 GraylistThreshold 是否大于 0 或大于 PublishThreshold 或无效
 		if p.GraylistThreshold > 0 || p.GraylistThreshold > p.PublishThreshold || isInvalidNumber(p.GraylistThreshold) {
-			return fmt.Errorf("invalid graylist threshold; it must be <= 0 and <= publish threshold and a valid number")
+			logger.Warnf("GraylistThreshold 无效: %f", p.GraylistThreshold) // GraylistThreshold 无效
+			return fmt.Errorf("GraylistThreshold 无效: %f", p.GraylistThreshold)
 		}
 	}
 	// 如果没有跳过原子验证，或者 AcceptPXThreshold 不为 0
 	if !p.SkipAtomicValidation || p.AcceptPXThreshold != 0 {
 		// 验证 AcceptPXThreshold 是否小于 0 或无效
 		if p.AcceptPXThreshold < 0 || isInvalidNumber(p.AcceptPXThreshold) {
-			return fmt.Errorf("invalid accept PX threshold; it must be >= 0 and a valid number")
+			logger.Warnf("AcceptPXThreshold 无效: %f", p.AcceptPXThreshold) // AcceptPXThreshold 无效
+			return fmt.Errorf("AcceptPXThreshold 无效: %f", p.AcceptPXThreshold)
 		}
 	}
 	// 如果没有跳过原子验证，或者 OpportunisticGraftThreshold 不为 0
 	if !p.SkipAtomicValidation || p.OpportunisticGraftThreshold != 0 {
 		// 验证 OpportunisticGraftThreshold 是否小于 0 或无效
 		if p.OpportunisticGraftThreshold < 0 || isInvalidNumber(p.OpportunisticGraftThreshold) {
-			return fmt.Errorf("invalid opportunistic grafting threshold; it must be >= 0 and a valid number")
+			logger.Warnf("OpportunisticGraftThreshold 无效: %f", p.OpportunisticGraftThreshold) // OpportunisticGraftThreshold 无效
+			return fmt.Errorf("OpportunisticGraftThreshold 无效: %f", p.OpportunisticGraftThreshold)
 		}
 	}
 	return nil // 所有验证通过，返回 nil 表示没有错误
@@ -85,14 +91,16 @@ func (p *PeerScoreParams) validate() error {
 	for topic, params := range p.Topics {
 		err := params.validate() // 调用主题参数的 validate 方法
 		if err != nil {
-			return fmt.Errorf("invalid score parameters for topic %s: %w", topic, err)
+			logger.Warnf("主题 %s 的评分参数无效: %w", topic, err) // 主题评分参数无效
+			return fmt.Errorf("主题 %s 的评分参数无效: %w", topic, err)
 		}
 	}
 	// 如果没有跳过原子验证，或者 TopicScoreCap 不为 0
 	if !p.SkipAtomicValidation || p.TopicScoreCap != 0 {
 		// 验证 TopicScoreCap 是否小于 0 或无效
 		if p.TopicScoreCap < 0 || isInvalidNumber(p.TopicScoreCap) {
-			return fmt.Errorf("invalid topic score cap; must be positive (or 0 for no cap) and a valid number")
+			logger.Warnf("TopicScoreCap 无效: %f", p.TopicScoreCap) // TopicScoreCap 无效
+			return fmt.Errorf("TopicScoreCap 无效: %f", p.TopicScoreCap)
 		}
 	}
 	// 验证 AppSpecificScore 是否为 nil
@@ -103,6 +111,7 @@ func (p *PeerScoreParams) validate() error {
 				return 0
 			}
 		} else {
+			logger.Warnf("缺少应用程序特定的评分函数") // 缺少应用程序特定的评分函数
 			return fmt.Errorf("missing application specific score function")
 		}
 	}
@@ -110,37 +119,44 @@ func (p *PeerScoreParams) validate() error {
 	if !p.SkipAtomicValidation || p.IPColocationFactorWeight != 0 {
 		// 验证 IPColocationFactorWeight 是否大于 0 或无效
 		if p.IPColocationFactorWeight > 0 || isInvalidNumber(p.IPColocationFactorWeight) {
-			return fmt.Errorf("invalid IPColocationFactorWeight; must be negative (or 0 to disable) and a valid number")
+			logger.Warnf("IPColocationFactorWeight 无效: %f", p.IPColocationFactorWeight) // IPColocationFactorWeight 无效
+			return fmt.Errorf("IPColocationFactorWeight 无效: %f", p.IPColocationFactorWeight)
 		}
 		// 验证 IPColocationFactorThreshold 是否小于 1
 		if p.IPColocationFactorWeight != 0 && p.IPColocationFactorThreshold < 1 {
-			return fmt.Errorf("invalid IPColocationFactorThreshold; must be at least 1")
+			logger.Warnf("IPColocationFactorThreshold 无效: %d", p.IPColocationFactorThreshold) // IPColocationFactorThreshold 无效
+			return fmt.Errorf("IPColocationFactorThreshold 无效: %d", p.IPColocationFactorThreshold)
 		}
 	}
 	// 如果没有跳过原子验证，或者 BehaviourPenaltyWeight 或 BehaviourPenaltyThreshold 不为 0
 	if !p.SkipAtomicValidation || p.BehaviourPenaltyWeight != 0 || p.BehaviourPenaltyThreshold != 0 {
 		// 验证 BehaviourPenaltyWeight 是否大于 0 或无效
 		if p.BehaviourPenaltyWeight > 0 || isInvalidNumber(p.BehaviourPenaltyWeight) {
-			return fmt.Errorf("invalid BehaviourPenaltyWeight; must be negative (or 0 to disable) and a valid number")
+			logger.Warnf("BehaviourPenaltyWeight 无效: %f", p.BehaviourPenaltyWeight) // BehaviourPenaltyWeight 无效
+			return fmt.Errorf("BehaviourPenaltyWeight 无效: %f", p.BehaviourPenaltyWeight)
 		}
 		// 验证 BehaviourPenaltyDecay 是否不在 (0, 1) 区间内或无效
 		if p.BehaviourPenaltyWeight != 0 && (p.BehaviourPenaltyDecay <= 0 || p.BehaviourPenaltyDecay >= 1 || isInvalidNumber(p.BehaviourPenaltyDecay)) {
-			return fmt.Errorf("invalid BehaviourPenaltyDecay; must be between 0 and 1")
+			logger.Warnf("BehaviourPenaltyDecay 无效: %f", p.BehaviourPenaltyDecay) // BehaviourPenaltyDecay 无效
+			return fmt.Errorf("BehaviourPenaltyDecay 无效: %f", p.BehaviourPenaltyDecay)
 		}
 		// 验证 BehaviourPenaltyThreshold 是否小于 0 或无效
 		if p.BehaviourPenaltyThreshold < 0 || isInvalidNumber(p.BehaviourPenaltyThreshold) {
-			return fmt.Errorf("invalid BehaviourPenaltyThreshold; must be >= 0 and a valid number")
+			logger.Warnf("BehaviourPenaltyThreshold 无效: %f", p.BehaviourPenaltyThreshold) // BehaviourPenaltyThreshold 无效
+			return fmt.Errorf("BehaviourPenaltyThreshold 无效: %f", p.BehaviourPenaltyThreshold)
 		}
 	}
 	// 如果没有跳过原子验证，或者 DecayInterval 或 DecayToZero 不为 0
 	if !p.SkipAtomicValidation || p.DecayInterval != 0 || p.DecayToZero != 0 {
 		// 验证 DecayInterval 是否小于 1 秒
 		if p.DecayInterval < time.Second {
-			return fmt.Errorf("invalid DecayInterval; must be at least 1s")
+			logger.Warnf("DecayInterval 无效: %s", p.DecayInterval) // DecayInterval 无效
+			return fmt.Errorf("DecayInterval 无效: %s", p.DecayInterval)
 		}
 		// 验证 DecayToZero 是否不在 (0, 1) 区间内或无效
 		if p.DecayToZero <= 0 || p.DecayToZero >= 1 || isInvalidNumber(p.DecayToZero) {
-			return fmt.Errorf("invalid DecayToZero; must be between 0 and 1")
+			logger.Warnf("DecayToZero 无效: %f", p.DecayToZero) // DecayToZero 无效
+			return fmt.Errorf("DecayToZero 无效: %f", p.DecayToZero)
 		}
 	}
 	return nil // 所有验证通过，返回 nil 表示没有错误
@@ -173,7 +189,8 @@ type TopicScoreParams struct {
 //   - error: 错误信息
 func (p *TopicScoreParams) validate() error {
 	if p.TopicWeight < 0 || isInvalidNumber(p.TopicWeight) {
-		return fmt.Errorf("invalid topic weight; must be >= 0 and a valid number")
+		logger.Warnf("TopicWeight 无效: %f", p.TopicWeight) // TopicWeight 无效
+		return fmt.Errorf("TopicWeight 无效: %f", p.TopicWeight)
 	}
 	if err := p.validateTimeInMeshParams(); err != nil {
 		return err
@@ -203,16 +220,20 @@ func (p *TopicScoreParams) validateTimeInMeshParams() error {
 		}
 	}
 	if p.TimeInMeshQuantum == 0 {
-		return fmt.Errorf("invalid TimeInMeshQuantum; must be non zero")
+		logger.Warnf("TimeInMeshQuantum 无效: %s", p.TimeInMeshQuantum) // TimeInMeshQuantum 无效
+		return fmt.Errorf("TimeInMeshQuantum 无效: %s", p.TimeInMeshQuantum)
 	}
 	if p.TimeInMeshWeight < 0 || isInvalidNumber(p.TimeInMeshWeight) {
-		return fmt.Errorf("invalid TimeInMeshWeight; must be positive (or 0 to disable) and a valid number")
+		logger.Warnf("TimeInMeshWeight 无效: %f", p.TimeInMeshWeight) // TimeInMeshWeight 无效
+		return fmt.Errorf("TimeInMeshWeight 无效: %f", p.TimeInMeshWeight)
 	}
 	if p.TimeInMeshWeight != 0 && p.TimeInMeshQuantum <= 0 {
-		return fmt.Errorf("invalid TimeInMeshQuantum; must be positive")
+		logger.Warnf("TimeInMeshQuantum 无效: %s", p.TimeInMeshQuantum) // TimeInMeshQuantum 无效
+		return fmt.Errorf("TimeInMeshQuantum 无效: %s", p.TimeInMeshQuantum)
 	}
 	if p.TimeInMeshWeight != 0 && (p.TimeInMeshCap <= 0 || isInvalidNumber(p.TimeInMeshCap)) {
-		return fmt.Errorf("invalid TimeInMeshCap; must be positive and a valid number")
+		logger.Warnf("TimeInMeshCap 无效: %f", p.TimeInMeshCap) // TimeInMeshCap 无效
+		return fmt.Errorf("TimeInMeshCap 无效: %f", p.TimeInMeshCap)
 	}
 	return nil
 }
@@ -227,13 +248,16 @@ func (p *TopicScoreParams) validateMessageDeliveryParams() error {
 		}
 	}
 	if p.FirstMessageDeliveriesWeight < 0 || isInvalidNumber(p.FirstMessageDeliveriesWeight) {
-		return fmt.Errorf("invalid FirstMessageDeliveriesWeight; must be positive (or 0 to disable) and a valid number")
+		logger.Warnf("FirstMessageDeliveriesWeight 无效: %f", p.FirstMessageDeliveriesWeight) // FirstMessageDeliveriesWeight 无效
+		return fmt.Errorf("FirstMessageDeliveriesWeight 无效: %f", p.FirstMessageDeliveriesWeight)
 	}
 	if p.FirstMessageDeliveriesWeight != 0 && (p.FirstMessageDeliveriesDecay <= 0 || p.FirstMessageDeliveriesDecay >= 1 || isInvalidNumber(p.FirstMessageDeliveriesDecay)) {
-		return fmt.Errorf("invalid FirstMessageDeliveriesDecay; must be between 0 and 1")
+		logger.Warnf("FirstMessageDeliveriesDecay 无效: %f", p.FirstMessageDeliveriesDecay) // FirstMessageDeliveriesDecay 无效
+		return fmt.Errorf("FirstMessageDeliveriesDecay 无效: %f", p.FirstMessageDeliveriesDecay)
 	}
 	if p.FirstMessageDeliveriesWeight != 0 && (p.FirstMessageDeliveriesCap <= 0 || isInvalidNumber(p.FirstMessageDeliveriesCap)) {
-		return fmt.Errorf("invalid FirstMessageDeliveriesCap; must be positive and a valid number")
+		logger.Warnf("FirstMessageDeliveriesCap 无效: %f", p.FirstMessageDeliveriesCap) // FirstMessageDeliveriesCap 无效
+		return fmt.Errorf("FirstMessageDeliveriesCap 无效: %f", p.FirstMessageDeliveriesCap)
 	}
 	return nil
 }
@@ -253,22 +277,28 @@ func (p *TopicScoreParams) validateMeshMessageDeliveryParams() error {
 		}
 	}
 	if p.MeshMessageDeliveriesWeight > 0 || isInvalidNumber(p.MeshMessageDeliveriesWeight) {
-		return fmt.Errorf("invalid MeshMessageDeliveriesWeight; must be negative (or 0 to disable) and a valid number")
+		logger.Warnf("MeshMessageDeliveriesWeight 无效: %f", p.MeshMessageDeliveriesWeight) // MeshMessageDeliveriesWeight 无效
+		return fmt.Errorf("MeshMessageDeliveriesWeight 无效: %f", p.MeshMessageDeliveriesWeight)
 	}
 	if p.MeshMessageDeliveriesWeight != 0 && (p.MeshMessageDeliveriesDecay <= 0 || p.MeshMessageDeliveriesDecay >= 1 || isInvalidNumber(p.MeshMessageDeliveriesDecay)) {
-		return fmt.Errorf("invalid MeshMessageDeliveriesDecay; must be between 0 and 1")
+		logger.Warnf("MeshMessageDeliveriesDecay 无效: %f", p.MeshMessageDeliveriesDecay) // MeshMessageDeliveriesDecay 无效
+		return fmt.Errorf("MeshMessageDeliveriesDecay 无效: %f", p.MeshMessageDeliveriesDecay)
 	}
 	if p.MeshMessageDeliveriesWeight != 0 && (p.MeshMessageDeliveriesCap <= 0 || isInvalidNumber(p.MeshMessageDeliveriesCap)) {
-		return fmt.Errorf("invalid MeshMessageDeliveriesCap; must be positive and a valid number")
+		logger.Warnf("MeshMessageDeliveriesCap 无效: %f", p.MeshMessageDeliveriesCap) // MeshMessageDeliveriesCap 无效
+		return fmt.Errorf("MeshMessageDeliveriesCap 无效: %f", p.MeshMessageDeliveriesCap)
 	}
 	if p.MeshMessageDeliveriesWeight != 0 && (p.MeshMessageDeliveriesThreshold <= 0 || isInvalidNumber(p.MeshMessageDeliveriesThreshold)) {
-		return fmt.Errorf("invalid MeshMessageDeliveriesThreshold; must be positive and a valid number")
+		logger.Warnf("MeshMessageDeliveriesThreshold 无效: %f", p.MeshMessageDeliveriesThreshold) // MeshMessageDeliveriesThreshold 无效
+		return fmt.Errorf("MeshMessageDeliveriesThreshold 无效: %f", p.MeshMessageDeliveriesThreshold)
 	}
 	if p.MeshMessageDeliveriesWindow < 0 {
-		return fmt.Errorf("invalid MeshMessageDeliveriesWindow; must be non-negative")
+		logger.Warnf("MeshMessageDeliveriesWindow 无效: %s", p.MeshMessageDeliveriesWindow) // MeshMessageDeliveriesWindow 无效
+		return fmt.Errorf("MeshMessageDeliveriesWindow 无效: %s", p.MeshMessageDeliveriesWindow)
 	}
 	if p.MeshMessageDeliveriesWeight != 0 && p.MeshMessageDeliveriesActivation < time.Second {
-		return fmt.Errorf("invalid MeshMessageDeliveriesActivation; must be at least 1s")
+		logger.Warnf("MeshMessageDeliveriesActivation 无效: %s", p.MeshMessageDeliveriesActivation) // MeshMessageDeliveriesActivation 无效
+		return fmt.Errorf("MeshMessageDeliveriesActivation 无效: %s", p.MeshMessageDeliveriesActivation)
 	}
 	return nil
 }
@@ -283,10 +313,12 @@ func (p *TopicScoreParams) validateMessageFailurePenaltyParams() error {
 		}
 	}
 	if p.MeshFailurePenaltyWeight > 0 || isInvalidNumber(p.MeshFailurePenaltyWeight) {
-		return fmt.Errorf("invalid MeshFailurePenaltyWeight; must be negative (or 0 to disable) and a valid number")
+		logger.Warnf("MeshFailurePenaltyWeight 无效: %f", p.MeshFailurePenaltyWeight) // MeshFailurePenaltyWeight 无效
+		return fmt.Errorf("MeshFailurePenaltyWeight 无效: %f", p.MeshFailurePenaltyWeight)
 	}
 	if p.MeshFailurePenaltyWeight != 0 && (isInvalidNumber(p.MeshFailurePenaltyDecay) || p.MeshFailurePenaltyDecay <= 0 || p.MeshFailurePenaltyDecay >= 1) {
-		return fmt.Errorf("invalid MeshFailurePenaltyDecay; must be between 0 and 1")
+		logger.Warnf("MeshFailurePenaltyDecay 无效: %f", p.MeshFailurePenaltyDecay) // MeshFailurePenaltyDecay 无效
+		return fmt.Errorf("MeshFailurePenaltyDecay 无效: %f", p.MeshFailurePenaltyDecay)
 	}
 	return nil
 }
@@ -301,10 +333,12 @@ func (p *TopicScoreParams) validateInvalidMessageDeliveryParams() error {
 		}
 	}
 	if p.InvalidMessageDeliveriesWeight > 0 || isInvalidNumber(p.InvalidMessageDeliveriesWeight) {
-		return fmt.Errorf("invalid InvalidMessageDeliveriesWeight; must be negative (or 0 to disable) and a valid number")
+		logger.Warnf("InvalidMessageDeliveriesWeight 无效: %f", p.InvalidMessageDeliveriesWeight) // InvalidMessageDeliveriesWeight 无效
+		return fmt.Errorf("InvalidMessageDeliveriesWeight 无效: %f", p.InvalidMessageDeliveriesWeight)
 	}
 	if p.InvalidMessageDeliveriesDecay <= 0 || p.InvalidMessageDeliveriesDecay >= 1 || isInvalidNumber(p.InvalidMessageDeliveriesDecay) {
-		return fmt.Errorf("invalid InvalidMessageDeliveriesDecay; must be between 0 and 1")
+		logger.Warnf("InvalidMessageDeliveriesDecay 无效: %f", p.InvalidMessageDeliveriesDecay) // InvalidMessageDeliveriesDecay 无效
+		return fmt.Errorf("InvalidMessageDeliveriesDecay 无效: %f", p.InvalidMessageDeliveriesDecay)
 	}
 	return nil
 }

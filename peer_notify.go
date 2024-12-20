@@ -7,11 +7,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
-	"github.com/sirupsen/logrus"
 )
 
 // watchForNewPeers 监听新的 peers 加入
@@ -25,7 +25,7 @@ func (ps *PubSub) watchForNewPeers(ctx context.Context) {
 	})
 	if err != nil {
 		// 订阅失败时，记录错误日志并返回
-		logrus.Errorf("订阅 peer 识别事件失败: %v", err)
+		logger.Errorf("订阅 peer 识别事件失败: %v", err)
 		return
 	}
 	defer sub.Close() // 确保在函数结束时关闭订阅
@@ -139,31 +139,31 @@ func (ps *PubSub) notifyNewPeer(peer peer.ID) {
 func (ps *PubSub) NotifyNewPeer(peer peer.ID) error {
 	// 1. 检查 PubSub 是否已初始化
 	if ps == nil {
-		logrus.Error("PubSub 未初始化")
+		logger.Error("PubSub 未初始化")
 		return fmt.Errorf("PubSub 未初始化")
 	}
 
 	// 2. 检查节点 ID 是否有效
 	if peer == "" {
-		logrus.Error("无效的节点 ID")
+		logger.Error("无效的节点 ID")
 		return fmt.Errorf("无效的节点 ID")
 	}
 
 	// 3. 检查连接状态
 	if ps.host.Network().Connectedness(peer) != network.Connected {
-		logrus.Errorf("节点 %s 未连接", peer)
+		logger.Errorf("节点 %s 未连接", peer)
 		return fmt.Errorf("节点 %s 未连接", peer.String())
 	}
 
 	// 4. 检查协议支持
 	protos, err := ps.host.Peerstore().GetProtocols(peer)
 	if err != nil {
-		logrus.Errorf("获取节点 %s 的协议失败: %v", peer, err)
+		logger.Errorf("获取节点 %s 的协议失败: %v", peer, err)
 		return fmt.Errorf("获取节点 %s 的协议失败", peer.String())
 	}
 
 	if len(protos) == 0 {
-		logrus.Errorf("节点 %s 没有支持的协议", peer)
+		logger.Errorf("节点 %s 没有支持的协议", peer)
 		return fmt.Errorf("节点 %s 没有支持的协议", peer.String())
 	}
 
@@ -208,7 +208,7 @@ func (ps *PubSub) NotifyNewPeer(peer peer.ID) error {
 	}
 
 	if !supported {
-		logrus.Errorf("节点 %s 不支持任何所需协议", peer)
+		logger.Errorf("节点 %s 不支持任何所需协议", peer)
 		return fmt.Errorf("节点 %s 不支持任何所需协议", peer.String())
 	}
 
@@ -221,20 +221,20 @@ func (ps *PubSub) NotifyNewPeer(peer peer.ID) error {
 
 	// 6. 检查节点是否已在待处理列表中
 	if _, ok := ps.newPeersPend[peer]; ok {
-		logrus.Warnf("节点 %s 已在待处理列表中", peer)
+		logger.Warnf("节点 %s 已在待处理列表中", peer)
 		return fmt.Errorf("节点 %s 已在待处理列表中", peer.String())
 	}
 
 	// 7. 添加到待处理列表
 	ps.newPeersPend[peer] = struct{}{}
-	logrus.Debugf("节点 %s 已添加到待处理列表", peer.String())
+	logger.Debugf("节点 %s 已添加到待处理列表", peer.String())
 
 	// 8. 通知处理循环
 	select {
 	case ps.newPeers <- struct{}{}:
-		logrus.Infof("已通知处理循环新节点 %s 的加入", peer.String())
+		logger.Infof("已通知处理循环新节点 %s 的加入", peer.String())
 	default:
-		logrus.Warnf("通知通道已满，节点 %s 将在下一轮处理", peer.String())
+		logger.Warnf("通知通道已满，节点 %s 将在下一轮处理", peer.String())
 	}
 
 	return nil

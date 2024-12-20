@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
@@ -85,7 +86,8 @@ func (b *backoff) updateAndGet(id peer.ID) (time.Duration, error) {
 			attempts: 0,                // 初始尝试次数为0
 		}
 	case h.attempts >= b.maxAttempts: // 如果已经达到最大尝试次数
-		return 0, fmt.Errorf("peer %s has reached its maximum backoff attempts", id) // 返回错误
+		logger.Errorf("对等节点 %s 已达到最大退避尝试次数", id)        // 记录错误
+		return 0, fmt.Errorf("对等节点 %s 已达到最大退避尝试次数", id) // 返回错误
 
 	case h.duration < MinBackoffDelay: // 如果当前退避时间小于最小退避延迟
 		h.duration = MinBackoffDelay // 设置为最小退避延迟

@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sirupsen/logrus"
 )
 
 // 默认验证队列大小
@@ -149,7 +149,7 @@ func (v *validation) AddValidator(req *addValReq) {
 
 	_, ok := v.topicVals[topic] // 检查是否已存在同主题的验证器
 	if ok {
-		req.resp <- fmt.Errorf("duplicate validator for topic %s", topic) // 如果主题已存在验证器，返回错误
+		req.resp <- fmt.Errorf("主题 %s 存在重复的验证器", topic) // 如果主题已存在验证器，返回错误
 		return
 	}
 
@@ -192,7 +192,7 @@ func (v *validation) makeValidator(req *addValReq) (*validatorImpl, error) {
 		if req.topic == "" {
 			topic = "(default)" // 如果主题为空，设置为默认值
 		}
-		return nil, fmt.Errorf("unknown validator type for topic %s; must be an instance of Validator or ValidatorEx", topic)
+		return nil, fmt.Errorf("主题 %s 的验证器类型未知；必须是 Validator 或 ValidatorEx 的实例", topic)
 	}
 
 	val := &validatorImpl{
@@ -228,7 +228,7 @@ func (v *validation) RemoveValidator(req *rmValReq) {
 		delete(v.topicVals, topic) // 删除主题验证器
 		req.resp <- nil            // 发送成功响应
 	} else {
-		req.resp <- fmt.Errorf("no validator for topic %s", topic) // 发送错误响应，如果主题没有验证器
+		req.resp <- fmt.Errorf("主题 %s 没有验证器", topic) // 发送错误响应，如果主题没有验证器
 	}
 }
 
@@ -264,8 +264,8 @@ func (v *validation) Push(src peer.ID, msg *Message) bool {
 		select {
 		case v.validateQ <- &validateReq{vals, src, msg}: // 将验证请求推送到验证队列
 		default:
-			logrus.Debugf("message validation throttled: queue full; dropping message from %s", src) // 验证队列已满，丢弃消息
-			v.tracer.RejectMessage(msg, RejectValidationQueueFull)                                   // 记录消息被拒绝的原因
+			logger.Debugf("消息验证节流；丢弃来自 %s 的消息", src)               // 验证队列已满，丢弃消息
+			v.tracer.RejectMessage(msg, RejectValidationQueueFull) // 记录消息被拒绝的原因
 		}
 		return false // 消息不能立即转发，需要验证
 	}
@@ -321,9 +321,9 @@ func (v *validation) validate(vals []*validatorImpl, src peer.ID, msg *Message, 
 	// 如果启用了签名验证但禁用了签名，则接收消息时 Signature 应为 nil
 	if msg.Signature != nil {
 		if !v.validateSignature(msg) { // 验证消息签名
-			logrus.Debugf("message signature validation failed; dropping message from %s", src) // 签名验证失败，丢弃消息
-			v.tracer.RejectMessage(msg, RejectInvalidSignature)                                 // 记录消息被拒绝的原因
-			return ValidationError{Reason: RejectInvalidSignature}                              // 返回验证错误
+			logger.Debugf("消息签名验证失败；丢弃来自 %s 的消息", src)             // 签名验证失败，丢弃消息
+			v.tracer.RejectMessage(msg, RejectInvalidSignature)    // 记录消息被拒绝的原因
+			return ValidationError{Reason: RejectInvalidSignature} // 返回验证错误
 		}
 	}
 
@@ -360,9 +360,9 @@ loop:
 	}
 
 	if result == ValidationReject { // 如果验证结果为拒绝
-		logrus.Debugf("message validation failed; dropping message from %s", src) // 验证失败，丢弃消息
-		v.tracer.RejectMessage(msg, RejectValidationFailed)                       // 记录消息被拒绝的原因
-		return ValidationError{Reason: RejectValidationFailed}                    // 返回验证错误
+		logger.Debugf("消息验证失败；丢弃来自 %s 的消息", src)               // 验证失败，丢弃消息
+		v.tracer.RejectMessage(msg, RejectValidationFailed)    // 记录消息被拒绝的原因
+		return ValidationError{Reason: RejectValidationFailed} // 返回验证错误
 	}
 
 	// 应用异步验证器
@@ -374,8 +374,8 @@ loop:
 				<-v.validateThrottle                       // 验证完成后释放节流信号
 			}()
 		default:
-			logrus.Debugf("message validation throttled; dropping message from %s", src) // 验证节流，丢弃消息
-			v.tracer.RejectMessage(msg, RejectValidationThrottled)                       // 记录消息被拒绝的原因
+			logger.Debugf("消息验证节流；丢弃来自 %s 的消息", src)               // 验证节流，丢弃消息
+			v.tracer.RejectMessage(msg, RejectValidationThrottled) // 记录消息被拒绝的原因
 		}
 		return nil // 返回 nil 表示消息已处理
 	}
@@ -403,8 +403,8 @@ loop:
 func (v *validation) validateSignature(msg *Message) bool {
 	err := verifyMessageSignature(msg.Message) // 验证消息签名
 	if err != nil {
-		logrus.Debugf("signature verification error: %s", err.Error()) // 签名验证错误，记录日志
-		return false                                                   // 返回 false 表示签名验证失败
+		logger.Debugf("签名验证错误: %s", err.Error()) // 签名验证错误，记录日志
+		return false                             // 返回 false 表示签名验证失败
 	}
 
 	return true // 返回 true 表示签名验证成功
@@ -427,19 +427,19 @@ func (v *validation) doValidateTopic(vals []*validatorImpl, src peer.ID, msg *Me
 	case ValidationAccept:
 		v.p.sendMsg <- msg // 发送消息到发送通道
 	case ValidationReject:
-		logrus.Debugf("message validation failed; dropping message from %s", src) // 验证失败，丢弃消息
-		v.tracer.RejectMessage(msg, RejectValidationFailed)                       // 记录消息被拒绝的原因
+		logger.Debugf("消息验证失败；丢弃来自 %s 的消息", src)            // 验证失败，丢弃消息
+		v.tracer.RejectMessage(msg, RejectValidationFailed) // 记录消息被拒绝的原因
 		return
 	case ValidationIgnore:
-		logrus.Debugf("message validation punted; ignoring message from %s", src) // 验证忽略，记录日志
-		v.tracer.RejectMessage(msg, RejectValidationIgnored)                      // 记录消息被忽略的原因
+		logger.Debugf("消息验证忽略；丢弃来自 %s 的消息", src)             // 验证忽略，记录日志
+		v.tracer.RejectMessage(msg, RejectValidationIgnored) // 记录消息被忽略的原因
 		return
 	case validationThrottled:
-		logrus.Debugf("message validation throttled; ignoring message from %s", src) // 验证节流，记录日志
-		v.tracer.RejectMessage(msg, RejectValidationThrottled)                       // 记录消息被节流的原因
+		logger.Debugf("消息验证节流；丢弃来自 %s 的消息", src)               // 验证节流，记录日志
+		v.tracer.RejectMessage(msg, RejectValidationThrottled) // 记录消息被节流的原因
 
 	default:
-		panic(fmt.Errorf("unexpected validation result: %d", result)) // 内部编程错误，恐慌处理
+		panic(fmt.Errorf("意外的验证结果: %d", result)) // 内部编程错误，恐慌处理
 	}
 }
 
@@ -473,8 +473,8 @@ func (v *validation) validateTopic(vals []*validatorImpl, src peer.ID, msg *Mess
 			}(val)
 
 		default:
-			logrus.Debugf("validation throttled for topic %s", val.topic) // 验证节流，记录日志
-			rch <- validationThrottled                                    // 发送节流结果到通道
+			logger.Debugf("验证节流；丢弃来自 %s 的消息", src) // 验证节流，记录日志
+			rch <- validationThrottled             // 发送节流结果到通道
 		}
 	}
 
@@ -514,8 +514,8 @@ func (v *validation) validateSingleTopic(val *validatorImpl, src peer.ID, msg *M
 		return res                                // 返回验证结果
 
 	default:
-		logrus.Debugf("validation throttled for topic %s", val.topic) // 验证节流，记录日志
-		return validationThrottled                                    // 返回节流结果
+		logger.Debugf("验证节流；丢弃来自 %s 的消息", src) // 验证节流，记录日志
+		return validationThrottled             // 返回节流结果
 	}
 }
 
@@ -530,7 +530,7 @@ func (v *validation) validateSingleTopic(val *validatorImpl, src peer.ID, msg *M
 func (val *validatorImpl) validateMsg(ctx context.Context, src peer.ID, msg *Message) ValidationResult {
 	start := time.Now() // 记录开始时间
 	defer func() {
-		logrus.Debugf("validation done; took %s", time.Since(start)) // 输出验证耗时
+		logger.Debugf("验证完成；耗时 %s", time.Since(start)) // 输出验证耗时
 	}()
 
 	if val.validateTimeout > 0 { // 如果设置了验证超时时间
@@ -549,8 +549,8 @@ func (val *validatorImpl) validateMsg(ctx context.Context, src peer.ID, msg *Mes
 		return r
 
 	default:
-		logrus.Warnf("Unexpected result from validator: %d; ignoring message", r) // 输出警告日志，记录意外的验证结果
-		return ValidationIgnore                                                   // 返回忽略结果
+		logger.Warnf("意外的验证结果: %d; 忽略消息", r) // 输出警告日志，记录意外的验证结果
+		return ValidationIgnore              // 返回忽略结果
 	}
 }
 
@@ -596,7 +596,7 @@ func WithValidateQueueSize(n int) Option {
 			ps.val.validateQ = make(chan *validateReq, n) // 创建一个带缓冲的验证请求通道
 			return nil                                    // 返回 nil 表示成功
 		}
-		return fmt.Errorf("validate queue size must be > 0") // 返回错误，队列大小必须大于 0
+		return fmt.Errorf("验证队列大小必须大于 0") // 返回错误，队列大小必须大于 0
 	}
 }
 
@@ -625,7 +625,7 @@ func WithValidateWorkers(n int) Option {
 			ps.val.validateWorkers = n // 设置验证工作线程的数量
 			return nil                 // 返回 nil 表示成功
 		}
-		return fmt.Errorf("number of validation workers must be > 0") // 返回错误，线程数量必须大于 0
+		return fmt.Errorf("验证工作线程数量必须大于 0") // 返回错误，线程数量必须大于 0
 	}
 }
 

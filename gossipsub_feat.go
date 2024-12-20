@@ -6,6 +6,7 @@ package pubsub
 import (
 	"fmt"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/protocol"
 )
 
@@ -54,7 +55,8 @@ func WithGossipSubProtocols(protos []protocol.ID, feature GossipSubFeatureTest) 
 	return func(ps *PubSub) error {
 		gs, ok := ps.rt.(*GossipSubRouter)
 		if !ok {
-			return fmt.Errorf("pubsub router is not gossipsub") // 返回错误，如果路由器不是 gossipsub
+			logger.Errorf("pubsub 路由器不是 gossipsub")     // 返回错误，如果路由器不是 gossipsub
+			return fmt.Errorf("pubsub 路由器不是 gossipsub") // 返回错误，如果路由器不是 gossipsub
 		}
 
 		gs.protos = protos   // 设置 gossipsub 路由器的协议列表

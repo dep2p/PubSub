@@ -11,11 +11,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
-	"github.com/sirupsen/logrus"
 
 	manet "github.com/multiformats/go-multiaddr/net"
 )
@@ -51,31 +51,40 @@ type PeerGaterParams struct {
 // 返回值:error，如果参数不合法则返回错误信息
 func (p *PeerGaterParams) validate() error {
 	if p.Threshold <= 0 {
-		return fmt.Errorf("invalid Threshold; must be > 0")
+		logger.Warnf("Threshold 无效: %f", p.Threshold) // Threshold 无效
+		return fmt.Errorf("Threshold 无效: %f", p.Threshold)
 	}
 	if p.GlobalDecay <= 0 || p.GlobalDecay >= 1 {
-		return fmt.Errorf("invalid GlobalDecay; must be between 0 and 1")
+		logger.Warnf("GlobalDecay 无效: %f", p.GlobalDecay) // GlobalDecay 无效
+		return fmt.Errorf("GlobalDecay 无效: %f", p.GlobalDecay)
 	}
 	if p.SourceDecay <= 0 || p.SourceDecay >= 1 {
-		return fmt.Errorf("invalid SourceDecay; must be between 0 and 1")
+		logger.Warnf("SourceDecay 无效: %f", p.SourceDecay) // SourceDecay 无效
+		return fmt.Errorf("SourceDecay 无效: %f", p.SourceDecay)
 	}
 	if p.DecayInterval < time.Second {
-		return fmt.Errorf("invalid DecayInterval; must be at least 1s")
+		logger.Warnf("DecayInterval 无效: %s", p.DecayInterval) // DecayInterval 无效
+		return fmt.Errorf("DecayInterval 无效: %s", p.DecayInterval)
 	}
 	if p.DecayToZero <= 0 || p.DecayToZero >= 1 {
-		return fmt.Errorf("invalid DecayToZero; must be between 0 and 1")
+		logger.Warnf("DecayToZero 无效: %f", p.DecayToZero) // DecayToZero 无效
+		return fmt.Errorf("DecayToZero 无效: %f", p.DecayToZero)
 	}
 	if p.Quiet < time.Second {
-		return fmt.Errorf("invalid Quiet interval; must be at least 1s")
+		logger.Warnf("Quiet 无效: %s", p.Quiet) // Quiet 无效
+		return fmt.Errorf("Quiet 无效: %s", p.Quiet)
 	}
 	if p.DuplicateWeight <= 0 {
-		return fmt.Errorf("invalid DuplicateWeight; must be > 0")
+		logger.Warnf("DuplicateWeight 无效: %f", p.DuplicateWeight) // DuplicateWeight 无效
+		return fmt.Errorf("DuplicateWeight 无效: %f", p.DuplicateWeight)
 	}
 	if p.IgnoreWeight < 1 {
-		return fmt.Errorf("invalid IgnoreWeight; must be >= 1")
+		logger.Warnf("IgnoreWeight 无效: %f", p.IgnoreWeight) // IgnoreWeight 无效
+		return fmt.Errorf("IgnoreWeight 无效: %f", p.IgnoreWeight)
 	}
 	if p.RejectWeight < 1 {
-		return fmt.Errorf("invalid RejectWeight; must be >= 1")
+		logger.Warnf("RejectWeight 无效: %f", p.RejectWeight) // RejectWeight 无效
+		return fmt.Errorf("RejectWeight 无效: %f", p.RejectWeight)
 	}
 
 	return nil
@@ -158,11 +167,13 @@ func WithPeerGater(params *PeerGaterParams) Option {
 	return func(ps *PubSub) error {
 		gs, ok := ps.rt.(*GossipSubRouter) // 将 PubSub 的路由器类型转换为 GossipSubRouter
 		if !ok {                           // 如果转换失败，返回错误信息
-			return fmt.Errorf("pubsub router is not gossipsub")
+			logger.Warnf("pubsub 路由器不是 gossipsub")
+			return fmt.Errorf("pubsub 路由器不是 gossipsub")
 		}
 
 		err := params.validate() // 验证参数的有效性
 		if err != nil {          // 如果验证失败，返回错误信息
+			logger.Warnf("peer gater 参数验证失败: %v", err)
 			return err
 		}
 
@@ -312,8 +323,8 @@ func (pg *peerGater) getPeerIP(p peer.ID) string {
 		remote := c.RemoteMultiaddr() // 获取远程的 Multiaddr
 		ip, err := manet.ToIP(remote) // 将 Multiaddr 转换为 IP 地址
 		if err != nil {               // 如果转换失败
-			logrus.Warnf("error determining IP for remote peer in %s: %s", remote, err) // 记录警告日志
-			return "<unknown>"                                                          // 返回未知 IP
+			logger.Warnf("确定远程节点的 IP 失败: %s: %s", remote, err) // 记录警告日志
+			return "<unknown>"                                 // 返回未知 IP
 		}
 		return ip.String() // 返回 IP 地址字符串
 	}
@@ -386,7 +397,7 @@ func (pg *peerGater) AcceptFrom(p peer.ID) AcceptStatus {
 		return AcceptAll
 	}
 
-	logrus.Debugf("throttling peer %s with threshold %f", p, threshold)
+	logger.Debugf("限流节点 %s 阈值 %f", p, threshold)
 	return AcceptControl
 }
 

@@ -12,9 +12,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sirupsen/logrus"
 )
 
 // DefaultPubsubProtocol 定义了默认的pubsub协议版本
@@ -53,6 +53,7 @@ func NewNodePubSub(ctx context.Context, host host.Host, opts ...NodeOption) (*No
 	// 初始化选项，应用用户提供的自定义选项
 	options := DefaultOptions()
 	if err := options.ApplyOptions(opts...); err != nil {
+		logger.Warnf("应用选项失败: %v", err)
 		return nil, err
 	}
 
@@ -72,6 +73,7 @@ func NewNodePubSub(ctx context.Context, host host.Host, opts ...NodeOption) (*No
 	// 启动 PubSub 服务
 	if err := pubsub.startPubSub(options); err != nil {
 		cancel()
+		logger.Warnf("启动 PubSub 服务失败: %v", err)
 		return nil, err
 	}
 
@@ -101,7 +103,7 @@ func (pubsub *NodePubSub) startPubSub(options *Options) error {
 		traceFilePath := filepath.Join(tempDir, "trace.out.json") // 构建临时文件路径
 		tracer, err := NewJSONTracer(traceFilePath)
 		if err != nil {
-			logrus.Errorf("创建JSON追踪器失败: %v", err)
+			logger.Errorf("创建JSON追踪器失败: %v", err)
 			return err
 		}
 
@@ -189,7 +191,7 @@ func (pubsub *NodePubSub) startPubSub(options *Options) error {
 	case FloodSub:
 		ps, err = NewFloodSub(pubsub.ctx, pubsub.host, pubsubOpts...)
 		if err == nil {
-			logrus.Info("flood-sub 服务已启动")
+			logger.Info("flood-sub 服务已启动")
 		}
 	case RandomSub:
 		return fmt.Errorf("暂不支持RandomSub")
@@ -198,7 +200,7 @@ func (pubsub *NodePubSub) startPubSub(options *Options) error {
 	default:
 		ps, err = NewGossipSub(pubsub.ctx, pubsub.host, pubsubOpts...)
 		if err == nil {
-			logrus.Info("gossip-sub 服务已启动")
+			logger.Info("gossip-sub 服务已启动")
 		}
 	}
 
@@ -221,6 +223,7 @@ func (pubsub *NodePubSub) startPubSub(options *Options) error {
 func (pubsub *NodePubSub) GetTopic(name string) (*Topic, error) {
 	// 检查PubSub是否已启动
 	if atomic.LoadInt32(&pubsub.startUp) < 2 {
+		logger.Warnf("发布订阅服务未运行")
 		return nil, fmt.Errorf("发布订阅服务未运行")
 	}
 
@@ -233,6 +236,7 @@ func (pubsub *NodePubSub) GetTopic(name string) (*Topic, error) {
 	if !ok || t == nil {
 		topic, err := pubsub.pubsub.Join(name)
 		if err != nil {
+			logger.Warnf("创建主题失败: %v", err)
 			return nil, err
 		}
 		pubsub.topicMap[name] = topic
@@ -258,10 +262,11 @@ func (pubsub *NodePubSub) Subscribe(topic string, subscribe bool) (*Subscription
 	// 获取主题
 	t, err := pubsub.GetTopic(topic)
 	if err != nil {
+		logger.Warnf("获取主题失败: %v", err)
 		return nil, err
 	}
 
-	logrus.Infof("订阅主题 [%s]", topic)
+	logger.Infof("订阅主题 [%s]", topic)
 
 	// 如果需要订阅，则返回订阅实例
 	if subscribe {
@@ -285,6 +290,7 @@ func (pubsub *NodePubSub) Publish(topic string, data []byte) error {
 	// 获取主题
 	t, err := pubsub.GetTopic(topic)
 	if err != nil {
+		logger.Warnf("获取主题失败: %v", err)
 		return err
 	}
 	// 发布消息
@@ -313,6 +319,7 @@ func (pubsub *NodePubSub) BroadcastWithTopic(topic string, data []byte) error {
 	// 检查主题是否已订阅
 	_, ok := pubsub.subscribedTopics[topic]
 	if !ok {
+		logger.Warnf("主题未订阅")
 		return fmt.Errorf("主题未订阅")
 	}
 	// 发布消息
@@ -328,6 +335,7 @@ func (pubsub *NodePubSub) BroadcastWithTopic(topic string, data []byte) error {
 func (pubsub *NodePubSub) CancelSubscribeWithTopic(topic string) error {
 	// 检查PubSub是否已启动
 	if atomic.LoadInt32(&pubsub.startUp) < 2 {
+		logger.Warnf("发布订阅服务未运行")
 		return fmt.Errorf("发布订阅服务未运行")
 	}
 
@@ -354,6 +362,7 @@ func (pubsub *NodePubSub) CancelSubscribeWithTopic(topic string) error {
 func (pubsub *NodePubSub) CancelPubsubWithTopic(name string) error {
 	// 检查PubSub是否已启动
 	if atomic.LoadInt32(&pubsub.startUp) < 2 {
+		logger.Warnf("订阅服务未启动，请先启动服务")
 		return fmt.Errorf("订阅服务未启动，请先启动服务")
 	}
 
@@ -364,6 +373,7 @@ func (pubsub *NodePubSub) CancelPubsubWithTopic(name string) error {
 	// 关闭主题并从映射中删除
 	if topic, ok := pubsub.topicMap[name]; ok {
 		if err := topic.Close(); err != nil {
+			logger.Warnf("关闭主题失败: %v", err)
 			return err
 		}
 		delete(pubsub.topicMap, name)
@@ -386,12 +396,14 @@ func (pubsub *NodePubSub) SubscribeWithTopic(topic string, handler PubSubMsgHand
 
 	// 检查主题是否已订阅
 	if pubsub.IsSubscribed(topic) {
+		logger.Warnf("主题已订阅")
 		return fmt.Errorf("主题已订阅")
 	}
 
 	// 订阅主题
 	topicSub, err := pubsub.Subscribe(topic, subscribe)
 	if err != nil {
+		logger.Warnf("订阅主题失败: %v", err)
 		return err
 	}
 
@@ -411,78 +423,78 @@ func (pubsub *NodePubSub) SubscribeWithTopic(topic string, handler PubSubMsgHand
 //   - topicSub: 表示订阅的主题
 //   - handler: 表示处理消息的回调函数
 func (pubsub *NodePubSub) topicSubLoop(topicSub *Subscription, handler PubSubMsgHandler) {
-	logrus.Info("开始订阅消息循环")
+	logger.Info("开始订阅消息循环")
 
 	for {
 		// 获取下一条消息
-		logrus.Info("等待接收下一条消息...")
+		logger.Info("等待接收下一条消息...")
 		message, err := topicSub.Next(pubsub.ctx)
 
 		// 错误处理
 		if err != nil {
 			if err.Error() == "subscription cancelled" {
-				logrus.Warn("订阅已被取消，退出消息循环: ", err)
+				logger.Warnf("订阅已被取消，退出消息循环: %v", err)
 				break
 			}
 			if err.Error() == "context canceled" {
-				logrus.Info("上下文已取消，退出消息循环")
+				logger.Infof("上下文已取消，退出消息循环: %v", err)
 				break
 			}
-			logrus.Errorf("接收消息失败: %s", err.Error())
+			logger.Errorf("接收消息失败: %s", err.Error())
 			continue
 		}
 
 		// 消息有效性检查
 		if message == nil {
-			logrus.Info("收到空消息，跳过处理")
+			logger.Info("收到空消息，跳过处理")
 			continue
 		}
 
 		// 忽略自己发送的消息
 		if message.GetFrom() == pubsub.host.ID() {
-			logrus.Info("忽略自己发送的消息")
+			logger.Info("忽略自己发送的消息")
 			continue
 		}
 
 		// 检查消息来源
 		if len(message.From) == 0 {
-			logrus.Info("消息来源为空，跳过处理")
+			logger.Info("消息来源为空，跳过处理")
 			continue
 		}
 
 		// 解析发送者ID
 		pid, err := peer.IDFromBytes(message.From)
 		if err != nil {
-			logrus.Errorf("无法解析消息发送者ID: %s", err.Error())
+			logger.Errorf("无法解析消息发送者ID: %s", err.Error())
 			continue
 		}
 
 		// 再次确认消息不是自己发送的
 		if pid.String() == pubsub.host.ID().String() {
-			logrus.Info("再次确认消息来自自己，跳过处理")
+			logger.Info("再次确认消息来自自己，跳过处理")
 			continue
 		}
 
 		// 创建处理消息的上下文
 		msgCtx, cancel := context.WithTimeout(pubsub.ctx, 15*time.Second)
-		logrus.Infof("开始处理来自节点 %s 的消息", pid.String())
+		logger.Infof("开始处理来自节点 %s 的消息", pid.String())
 
 		// 异步处理消息
 		go func(ctx context.Context, msg *Message) {
 			defer cancel()
 			select {
 			case <-ctx.Done():
-				logrus.Warn("消息处理超时或上下文已取消")
+				logger.Warn("消息处理超时或上下文已取消")
 				return
 			default:
-				logrus.Info("调用消息处理函数")
+				logger.Info("调用消息处理函数")
 				handler(msg)
-				logrus.Info("消息处理完成")
+				logger.Info("消息处理完成")
 			}
 		}(msgCtx, message)
 	}
 
-	logrus.Info("订阅消息循环结束")
+	logger.Info("订阅消息循环结束")
 }
 
 // Pubsub 返回 PubSub 实例
@@ -511,22 +523,22 @@ func (pubsub *NodePubSub) ListPeers(topic string) []peer.ID {
 func (pubsub *NodePubSub) NotifyNewPeer(peer peer.ID) error {
 	// 1. 检查 PubSub 是否已初始化
 	if atomic.LoadInt32(&pubsub.startUp) < 2 {
-		logrus.Error("PubSub 未启动")
+		logger.Error("PubSub 未启动")
 		return fmt.Errorf("PubSub 未启动")
 	}
 
 	// 2. 检查 pubsub 实例是否存在
 	if pubsub.pubsub == nil {
-		logrus.Error("PubSub 实例未初始化")
+		logger.Error("PubSub 实例未初始化")
 		return fmt.Errorf("PubSub 实例未初始化")
 	}
 
 	// 3. 调用底层 PubSub 的 NotifyNewPeer 方法
 	if err := pubsub.pubsub.NotifyNewPeer(peer); err != nil {
-		logrus.Errorf("通知新节点失败: %v", err)
+		logger.Errorf("通知新节点失败: %v", err)
 		return fmt.Errorf("通知新节点失败")
 	}
 
-	logrus.Infof("成功通知新节点: %s", peer.String())
+	logger.Infof("成功通知新节点: %s", peer.String())
 	return nil
 }

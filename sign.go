@@ -6,6 +6,7 @@ package pubsub
 import (
 	"fmt"
 
+	"github.com/dep2p/pubsub/logger"
 	pb "github.com/dep2p/pubsub/pb"
 
 	"github.com/libp2p/go-libp2p/core/crypto"
@@ -60,6 +61,7 @@ const SignPrefix = "libp2p-pubsub:"
 func verifyMessageSignature(m *pb.Message) error {
 	pubk, err := messagePubKey(m) // 获取消息的公钥
 	if err != nil {
+		logger.Warnf("获取消息公钥失败: %s", err) // 获取消息公钥失败
 		return err
 	}
 
@@ -68,6 +70,7 @@ func verifyMessageSignature(m *pb.Message) error {
 	xm.Key = nil
 	bytes, err := xm.Marshal() // 序列化消息
 	if err != nil {
+		logger.Warnf("序列化消息失败: %s", err) // 序列化消息失败
 		return err
 	}
 
@@ -75,10 +78,12 @@ func verifyMessageSignature(m *pb.Message) error {
 
 	valid, err := pubk.Verify(bytes, m.Signature) // 验证签名
 	if err != nil {
+		logger.Warnf("验证签名失败: %s", err) // 验证签名失败
 		return err
 	}
 
 	if !valid {
+		logger.Warnf("签名无效")                   // 签名无效
 		return fmt.Errorf("invalid signature") // 签名无效
 	}
 
@@ -103,20 +108,24 @@ func messagePubKey(m *pb.Message) (crypto.PubKey, error) {
 		// 没有附加密钥，必须从源 ID 提取
 		pubk, err = pid.ExtractPublicKey() // 提取公钥
 		if err != nil {
-			return nil, fmt.Errorf("cannot extract signing key: %s", err.Error())
+			logger.Warnf("提取签名密钥失败: %s", err.Error()) // 提取签名密钥失败
+			return nil, fmt.Errorf("无法提取签名密钥: %s", err.Error())
 		}
 		if pubk == nil {
-			return nil, fmt.Errorf("cannot extract signing key")
+			logger.Warnf("无法提取签名密钥") // 无法提取签名密钥
+			return nil, fmt.Errorf("无法提取签名密钥")
 		}
 	} else {
 		pubk, err = crypto.UnmarshalPublicKey(m.Key) // 解码公钥
 		if err != nil {
-			return nil, fmt.Errorf("cannot unmarshal signing key: %s", err.Error())
+			logger.Warnf("解码签名密钥失败: %s", err.Error()) // 解码签名密钥失败
+			return nil, fmt.Errorf("无法解码签名密钥: %s", err.Error())
 		}
 
 		// 验证源 ID 与附加密钥是否匹配
 		if !pid.MatchesPublicKey(pubk) {
-			return nil, fmt.Errorf("bad signing key; source ID %s doesn't match key", pid)
+			logger.Warnf("签名密钥与源ID不匹配: %s", pid) // 签名密钥与源ID不匹配
+			return nil, fmt.Errorf("签名密钥与源ID不匹配: %s", pid)
 		}
 	}
 
@@ -133,6 +142,7 @@ func messagePubKey(m *pb.Message) (crypto.PubKey, error) {
 func signMessage(pid peer.ID, key crypto.PrivKey, m *pb.Message) error {
 	bytes, err := m.Marshal() // 序列化消息
 	if err != nil {
+		logger.Warnf("序列化消息失败: %s", err) // 序列化消息失败
 		return err
 	}
 
@@ -140,6 +150,7 @@ func signMessage(pid peer.ID, key crypto.PrivKey, m *pb.Message) error {
 
 	sig, err := key.Sign(bytes) // 生成签名
 	if err != nil {
+		logger.Warnf("生成签名失败: %s", err) // 生成签名失败
 		return err
 	}
 
@@ -149,6 +160,7 @@ func signMessage(pid peer.ID, key crypto.PrivKey, m *pb.Message) error {
 	if pk == nil {
 		pubk, err := crypto.MarshalPublicKey(key.GetPublic()) // 编码公钥
 		if err != nil {
+			logger.Warnf("编码签名密钥失败: %s", err) // 编码签名密钥失败
 			return err
 		}
 		m.Key = pubk // 设置消息公钥

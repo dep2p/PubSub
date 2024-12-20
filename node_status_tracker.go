@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -410,7 +411,7 @@ func (nst *NodeStatusTracker) recordStatusChange(change StatusChange) {
 		// 成功将变化发送到通道
 	default:
 		// 如果通道已满，记录日志但不阻塞
-		log.Warnf("状态变化通道已满，丢弃变化：%v", change)
+		logger.Warnf("状态变化通道已满，丢弃变化：%v", change)
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"regexp"
 
+	"github.com/dep2p/pubsub/logger"
 	pb "github.com/dep2p/pubsub/pb"
 
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -205,6 +206,7 @@ func (f *limitSubscriptionFilter) CanSubscribe(topic string) bool {
 // - error: 错误信息，如果有的话
 func (f *limitSubscriptionFilter) FilterIncomingSubscriptions(from peer.ID, subs []*pb.RPC_SubOpts) ([]*pb.RPC_SubOpts, error) {
 	if len(subs) > f.limit {
+		logger.Warnf("订阅数量超过限制: %d > %d", len(subs), f.limit)
 		return nil, ErrTooManySubscriptions
 	}
 

@@ -7,10 +7,10 @@ import (
 	"context"
 	"math"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -232,7 +232,7 @@ func (rs *RandomSubRouter) Publish(msg *Message) {
 			rs.tracer.SendRPC(out, p)
 		default:
 			// 如果消息队列满了，记录丢弃操作
-			logrus.Infof("dropping message to peer %s: queue full", p)
+			logger.Warnf("丢弃发送到对等节点 %s 的消息: 队列已满", p)
 			rs.tracer.DropRPC(out, p)
 		}
 	}

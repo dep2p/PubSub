@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/discovery"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
@@ -56,6 +57,7 @@ func (opt *Options) ApplyOptions(opts ...NodeOption) error {
 	// 遍历所有选项并应用
 	for _, o := range opts {
 		if err := o(opt); err != nil {
+			logger.Warnf("应用选项失败: %v", err)
 			return err // 如果应用某个选项出错，立即返回错误
 		}
 	}

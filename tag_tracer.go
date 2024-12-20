@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/connmgr"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -58,7 +58,7 @@ type tagTracer struct {
 func newTagTracer(cmgr connmgr.ConnManager) *tagTracer {
 	decayer, ok := connmgr.SupportsDecay(cmgr) // 检查连接管理器是否支持衰减标签
 	if !ok {
-		logrus.Debugf("connection manager does not support decaying tags, delivery tags will not be applied")
+		logger.Debugf("连接管理器不支持衰减标签，传递标签将不会被应用")
 	}
 	return &tagTracer{
 		cmgr:      cmgr,
@@ -140,7 +140,7 @@ func (t *tagTracer) addDeliveryTag(topic string) {
 		connmgr.BumpSumBounded(0, GossipSubConnTagMessageDeliveryCap))
 
 	if err != nil {
-		logrus.Warnf("unable to create decaying delivery tag: %s", err)
+		logger.Warnf("无法创建衰减传递标签: %s", err)
 		return
 	}
 	t.decaying[topic] = tag
@@ -158,7 +158,7 @@ func (t *tagTracer) removeDeliveryTag(topic string) {
 	}
 	err := tag.Close()
 	if err != nil {
-		logrus.Warnf("error closing decaying connmgr tag: %s", err)
+		logger.Warnf("关闭衰减连接管理器标签失败: %s", err)
 	}
 	delete(t.decaying, topic)
 }
@@ -175,7 +175,8 @@ func (t *tagTracer) bumpDeliveryTag(p peer.ID, topic string) error {
 
 	tag, ok := t.decaying[topic]
 	if !ok {
-		return fmt.Errorf("no decaying tag registered for topic %s", topic)
+		logger.Warnf("没有为主题 %s 注册衰减标签", topic)
+		return fmt.Errorf("没有为主题 %s 注册衰减标签", topic)
 	}
 	return tag.Bump(p, GossipSubConnTagBumpMessageDelivery)
 }
@@ -188,7 +189,7 @@ func (t *tagTracer) bumpTagsForMessage(p peer.ID, msg *Message) {
 	topic := msg.GetTopic()
 	err := t.bumpDeliveryTag(p, topic)
 	if err != nil {
-		logrus.Warnf("error bumping delivery tag: %s", err)
+		logger.Warnf("增加传递标签失败: %s", err)
 	}
 }
 

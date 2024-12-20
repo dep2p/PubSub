@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
-	"github.com/sirupsen/logrus"
 
 	manet "github.com/multiformats/go-multiaddr/net"
 )
@@ -128,16 +128,19 @@ func WithPeerScoreInspect(inspect interface{}, period time.Duration) Option {
 		// 检查路由器是否为 gossipsub 类型
 		gs, ok := ps.rt.(*GossipSubRouter)
 		if !ok {
+			logger.Warnf("pubsub 路由器不是 gossipsub") // pubsub 路由器不是 gossipsub
 			return fmt.Errorf("pubsub 路由器不是 gossipsub")
 		}
 
 		// 检查是否已启用对等节点评分
 		if gs.score == nil {
+			logger.Warnf("未启用对等节点评分") // 未启用对等节点评分
 			return fmt.Errorf("未启用对等节点评分")
 		}
 
 		// 检查是否已有分数检查器
 		if gs.score.inspect != nil || gs.score.inspectEx != nil {
+			logger.Warnf("重复的对等节点分数检查器") // 重复的对等节点分数检查器
 			return fmt.Errorf("重复的对等节点分数检查器")
 		}
 
@@ -148,6 +151,7 @@ func WithPeerScoreInspect(inspect interface{}, period time.Duration) Option {
 		case ExtendedPeerScoreInspectFn:
 			gs.score.inspectEx = i
 		default:
+			logger.Warnf("未知的对等节点分数检查器类型: %v", inspect) // 未知的对等节点分数检查器类型
 			return fmt.Errorf("未知的对等节点分数检查器类型: %v", inspect)
 		}
 
@@ -755,7 +759,7 @@ func (ps *peerScore) DeliverMessage(msg *Message) {
 
 	// 检查是否为首次交付跟踪
 	if drec.status != deliveryUnknown {
-		logrus.Debugf("unexpected delivery trace: message from %s was first seen %s ago and has delivery status %d", msg.ReceivedFrom, time.Since(drec.firstSeen), drec.status)
+		logger.Debugf("意外的交付跟踪: 消息来自 %s 首次看到 %s 前和交付状态 %d", msg.ReceivedFrom, time.Since(drec.firstSeen), drec.status)
 		return
 	}
 
@@ -796,7 +800,7 @@ func (ps *peerScore) RejectMessage(msg *Message, reason string) {
 
 	// 检查是否为首次拒绝跟踪
 	if drec.status != deliveryUnknown {
-		logrus.Debugf("unexpected rejection trace: message from %s was first seen %s ago and has delivery status %d", msg.ReceivedFrom, time.Since(drec.firstSeen), drec.status)
+		logger.Debugf("意外的拒绝跟踪: 消息来自 %s 首次看到 %s 前和交付状态 %d", msg.ReceivedFrom, time.Since(drec.firstSeen), drec.status)
 		return
 	}
 
