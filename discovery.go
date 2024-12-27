@@ -226,8 +226,8 @@ func (d *discover) Advertise(topic string) {
 	go func() { // 启动一个新的协程处理广告过程
 		next, err := d.discovery.Advertise(advertisingCtx, topic) // 在发现服务中广告该主题
 		if err != nil {                                           // 如果广告过程中出现错误
-			logger.Warnf("bootstrap: 提供对等节点发现服务失败: %s", err.Error()) // 记录警告日志
-			if next == 0 {                                           // 如果下一次广告间隔为0
+			logger.Warnf("bootstrap: 为主题 %s 提供集合点时发生错误: %s", topic, err.Error()) // 记录警告日志
+			if next == 0 {                                                       // 如果下一次广告间隔为0
 				next = discoveryAdvertiseRetryInterval // 使用默认的广告重试间隔
 			}
 		}
@@ -355,7 +355,7 @@ func (d *discover) Bootstrap(ctx context.Context, topic string, ready RouterRead
 //   - topic: 主题
 //   - opts: 发现选项
 func (d *discover) handleDiscovery(ctx context.Context, topic string, opts []discovery.Option) {
-	discoverCtx, cancel := context.WithTimeout(ctx, time.Second*10) // 创建带有10秒超时的上下文
+	discoverCtx, cancel := context.WithTimeout(ctx, time.Second*90) // 创建带有10秒超时的上下文
 	defer cancel()                                                  // 函数结束时取消上下文
 
 	peerCh, err := d.discovery.FindPeers(discoverCtx, topic, opts...) // 使用发现服务查找对应主题的对等节点
