@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dep2p/pubsub/logger"
 	pb "github.com/dep2p/pubsub/pb"
 
 	"github.com/google/uuid"

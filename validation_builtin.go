@@ -8,7 +8,6 @@ import (
 	"encoding/binary"
 	"sync"
 
-	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 

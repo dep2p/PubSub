@@ -7,7 +7,6 @@ import (
 	"errors"
 	"regexp"
 
-	"github.com/dep2p/pubsub/logger"
 	pb "github.com/dep2p/pubsub/pb"
 
 	"github.com/libp2p/go-libp2p/core/peer"

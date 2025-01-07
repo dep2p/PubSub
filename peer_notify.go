@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"

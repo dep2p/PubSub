@@ -13,7 +13,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/dep2p/pubsub/logger"
 	"github.com/dep2p/pubsub/timecache"
 
 	pb "github.com/dep2p/pubsub/pb"

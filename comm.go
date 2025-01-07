@@ -9,9 +9,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/dep2p/pubsub/logger"
+	logging "github.com/dep2p/log"
 	pb "github.com/dep2p/pubsub/pb"
-
 	"github.com/gogo/protobuf/proto"
 	pool "github.com/libp2p/go-buffer-pool"
 	"github.com/multiformats/go-varint"
@@ -20,6 +19,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-msgio"
 )
+
+var logger = logging.Logger("pubsub")
 
 // getHelloPacket 方法获取包含所有订阅信息的初始RPC包，发送给新连接的节点
 // 返回值:

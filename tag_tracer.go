@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/connmgr"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"

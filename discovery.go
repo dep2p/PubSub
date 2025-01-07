@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/discovery"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"

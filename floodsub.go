@@ -6,7 +6,6 @@ package pubsub
 import (
 	"context"
 
-	"github.com/dep2p/pubsub/logger"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"

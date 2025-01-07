@@ -4,6 +4,7 @@ go 1.22.5
 
 require (
 	github.com/benbjohnson/clock v1.3.5
+	github.com/dep2p/log v0.0.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/uuid v1.6.0
 	github.com/libp2p/go-buffer-pool v0.1.0
@@ -12,7 +13,6 @@ require (
 	github.com/libp2p/go-msgio v0.3.0
 	github.com/multiformats/go-multiaddr v0.14.0
 	github.com/multiformats/go-varint v0.0.7
-	github.com/sirupsen/logrus v1.9.3
 )
 
 require (
@@ -106,7 +106,7 @@ require (
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.32.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.28.0 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
