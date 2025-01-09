@@ -9,7 +9,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/peer"
 )
 
 // PeerScoreThresholds 包含用于控制对等节点分数的参数

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/peer"
 )
 
 // TestPeerScoreThreshold_AtomicValidation 测试 PeerScoreThreshold 的原子验证。

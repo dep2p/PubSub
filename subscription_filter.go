@@ -9,7 +9,7 @@ import (
 
 	pb "github.com/dep2p/pubsub/pb"
 
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/peer"
 )
 
 // ErrTooManySubscriptions 可能由 SubscriptionFilter 返回，以表示订阅过多无法处理的错误

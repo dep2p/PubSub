@@ -12,11 +12,11 @@ import (
 
 	pb "github.com/dep2p/pubsub/pb"
 
+	"github.com/dep2p/libp2p/core/crypto"
+	"github.com/dep2p/libp2p/core/network"
 	"github.com/google/uuid"
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/libp2p/go-libp2p/core/network"
 
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/peer"
 )
 
 // ErrTopicClosed 表示如果在主题关闭后使用 Topic，将返回此错误。

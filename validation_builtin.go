@@ -8,7 +8,7 @@ import (
 	"encoding/binary"
 	"sync"
 
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/peer"
 )
 
 // PeerMetadataStore 是一个接口，用于存储和检索每个对等节点的元数据

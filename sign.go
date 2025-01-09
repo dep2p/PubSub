@@ -8,8 +8,8 @@ import (
 
 	pb "github.com/dep2p/pubsub/pb"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/crypto"
+	"github.com/dep2p/libp2p/core/peer"
 )
 
 // MessageSignaturePolicy 描述是否生成、期望和/或验证签名的策略。

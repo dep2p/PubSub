@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/protocol"
+	"github.com/dep2p/libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/protocol"
 )
 
 // gossipTracer 是一个内部追踪器，跟踪 IWANT 请求，以便惩罚在 IHAVE 广告后不跟进 IWANT 请求的对等节点。

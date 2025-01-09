@@ -12,8 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/host"
+	"github.com/dep2p/libp2p/core/peer"
 )
 
 // DefaultPubsubProtocol 定义了默认的pubsub协议版本

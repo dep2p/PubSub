@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/discovery"
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/discovery"
+	"github.com/dep2p/libp2p/core/host"
+	"github.com/dep2p/libp2p/core/peer"
 )
 
 // mockDiscoveryServer 模拟的发现服务器，用于模拟对等节点的发现

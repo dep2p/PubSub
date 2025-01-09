@@ -13,11 +13,11 @@ import (
 
 	pb "github.com/dep2p/pubsub/pb"
 
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/peerstore"
-	"github.com/libp2p/go-libp2p/core/record"
+	"github.com/dep2p/libp2p/core/host"
+	"github.com/dep2p/libp2p/core/network"
+	"github.com/dep2p/libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/peerstore"
+	"github.com/dep2p/libp2p/core/record"
 
 	"github.com/libp2p/go-msgio/protoio"
 )

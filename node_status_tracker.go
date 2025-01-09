@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
+	"github.com/dep2p/libp2p/core/host"
+	"github.com/dep2p/libp2p/core/network"
+	"github.com/dep2p/libp2p/core/peer"
+	"github.com/dep2p/libp2p/p2p/protocol/ping"
 )
 
 // NodeStatus 表示节点的状态

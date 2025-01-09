@@ -6,7 +6,7 @@ package pubsub
 import (
 	"fmt"
 
-	"github.com/libp2p/go-libp2p/core/protocol"
+	"github.com/dep2p/libp2p/core/protocol"
 )
 
 // GossipSubFeatureTest 是一个功能测试函数；它接受一个功能和协议ID，并且如果协议支持该功能则返回 true

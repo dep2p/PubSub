@@ -6,8 +6,8 @@ package pubsub
 import (
 	"time"
 
+	"github.com/dep2p/libp2p/core/peer"
 	"github.com/dep2p/pubsub/timecache"
-	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 // Blacklist 是一个接口，定义了对等节点黑名单的方法

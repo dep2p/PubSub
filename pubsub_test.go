@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/dep2p/libp2p"
+	"github.com/dep2p/libp2p/core/host"
+	"github.com/dep2p/libp2p/core/network"
 )
 
 // getDefaultHosts 创建并返回指定数量的 libp2p 主机。

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/dep2p/libp2p/core/host"
 )
 
 // getRandomsub 创建并返回一个带有随机订阅的 PubSub 实例。

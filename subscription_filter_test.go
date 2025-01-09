@@ -8,7 +8,7 @@ import (
 
 	pb "github.com/dep2p/pubsub/pb"
 
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/peer"
 )
 
 // TestBasicSubscriptionFilter 测试基本的订阅过滤功能

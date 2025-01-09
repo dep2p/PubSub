@@ -6,8 +6,8 @@ package pubsub
 import (
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/protocol"
+	"github.com/dep2p/libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/protocol"
 
 	pb "github.com/dep2p/pubsub/pb"
 )

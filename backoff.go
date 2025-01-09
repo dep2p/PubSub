@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/libp2p/core/peer"
 )
 
 // 定义了一些常量，用于控制退避算法的参数
