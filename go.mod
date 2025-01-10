@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/benbjohnson/clock v1.3.5
-	github.com/dep2p/libp2p v0.0.2
+	github.com/dep2p/libp2p v0.0.3
 	github.com/dep2p/log v0.0.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/uuid v1.6.0
