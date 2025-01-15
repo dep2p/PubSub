@@ -541,3 +541,10 @@ func (pubsub *NodePubSub) NotifyNewPeer(peer peer.ID) error {
 	logger.Infof("成功通知新节点: %s", peer.String())
 	return nil
 }
+
+// Host 返回当前节点的 libp2p 主机实例
+// 返回:
+//   - host.Host: 当前节点使用的 libp2p 主机实例
+func (pubsub *NodePubSub) Host() host.Host {
+	return pubsub.host
+}
