@@ -54,7 +54,7 @@ type PubSub struct {
 	counter uint64 // 原子计数器，用于生成唯一的消息序列号
 
 	// 本地主机
-	host host.Host // libp2p 主机实例，表示当前节点
+	host host.Host // dep2p 主机实例，表示当前节点
 
 	// 发布-订阅路由器
 	rt PubSubRouter // 实际执行消息路由的路由器接口
@@ -283,7 +283,7 @@ type Option func(*PubSub) error
 // NewPubSub 返回一个新的 PubSub 管理对象。
 // 参数:
 //   - ctx: 用于控制 PubSub 生命周期的上下文。
-//   - h: libp2p 主机。
+//   - h: dep2p 主机。
 //   - rt: PubSub 路由器。
 //   - opts: 可选配置项。
 //
@@ -293,7 +293,7 @@ type Option func(*PubSub) error
 func NewPubSub(ctx context.Context, h host.Host, rt PubSubRouter, opts ...Option) (*PubSub, error) {
 	// 初始化 PubSub 对象
 	ps := &PubSub{
-		host:                  h,                                                                 // libp2p 主机
+		host:                  h,                                                                 // dep2p 主机
 		ctx:                   ctx,                                                               // 上下文
 		rt:                    rt,                                                                // 路由器
 		val:                   newValidation(),                                                   // 验证模块
@@ -387,7 +387,7 @@ func NewPubSub(ctx context.Context, h host.Host, rt PubSubRouter, opts ...Option
 			工作方式: 在协议匹配时，不仅根据协议 ID 判断，还可以使用自定义的匹配函数 (match function)。该函数可以实现更复杂的逻辑，比如根据协议版本号或其他协议字段来决定是否使用指定的协议处理器。
 			示例:
 				h.SetStreamHandlerMatch("/myprotocol/1.0.0", myMatchFunc, myHandler)
-				这里，当主机接收到协议 ID 为 "/myprotocol/1.0.0" 的流时，libp2p 将首先调用 myMatchFunc 来决定是否使用 myHandler 处理该流。
+				这里，当主机接收到协议 ID 为 "/myprotocol/1.0.0" 的流时，dep2p 将首先调用 myMatchFunc 来决定是否使用 myHandler 处理该流。
 			*/
 		} else {
 			// 否则，直接设置流处理器
@@ -395,7 +395,7 @@ func NewPubSub(ctx context.Context, h host.Host, rt PubSubRouter, opts ...Option
 			/**
 			SetStreamHandler
 			用途: 直接为指定的协议 ID 设置一个协议处理器。
-			工作方式: 当主机接收到一个传入的流 (stream)，并且流的协议与设置的协议 ID 相匹配时，libp2p 主机将使用指定的协议处理器来处理该流。
+			工作方式: 当主机接收到一个传入的流 (stream)，并且流的协议与设置的协议 ID 相匹配时，dep2p 主机将使用指定的协议处理器来处理该流。
 			示例:
 				h.SetStreamHandler("/myprotocol/1.0.0", myHandler)
 				这里，当主机接收到协议 ID 为 "/myprotocol/1.0.0" 的流时，将调用 myHandler 来处理该流。

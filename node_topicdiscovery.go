@@ -4,7 +4,7 @@ package pubsub
 // 	"context"
 // 	"time"
 
-// 	dht "github.com/libp2p/go-libp2p-kad-dht"
+// 	dht "github.com/dep2p/go-dep2p-kad-dht"
 // 	"github.com/dep2p/go-dep2p/core/discovery"
 // 	"github.com/dep2p/go-dep2p/core/host"
 // 	"github.com/dep2p/go-dep2p/core/peer"

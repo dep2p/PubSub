@@ -225,7 +225,7 @@ func (t *PBTracer) doWrite() {
 var _ EventTracer = (*PBTracer)(nil)
 
 // RemoteTracerProtoID 是远程追踪协议的 ID
-const RemoteTracerProtoID = protocol.ID("/libp2p/pubsub/tracer/1.0.0")
+const RemoteTracerProtoID = protocol.ID("/dep2p/pubsub/tracer/1.0.0")
 
 // RemoteTracer 是一个将追踪事件发送到远程对等节点的追踪器
 type RemoteTracer struct {
@@ -362,7 +362,7 @@ func (t *RemoteTracer) doWrite() {
 func (t *RemoteTracer) openStream() (network.Stream, error) {
 	for {
 		ctx, cancel := context.WithTimeout(t.ctx, time.Minute)       // 创建一个带超时的上下文
-		s, err := t.host.NewStream(ctx, t.peer, RemoteTracerProtoID) // 使用libp2p主机创建新流
+		s, err := t.host.NewStream(ctx, t.peer, RemoteTracerProtoID) // 使用dep2p主机创建新流
 		cancel()                                                     // 取消上下文
 		if err != nil {
 			if t.ctx.Err() != nil {

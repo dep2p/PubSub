@@ -52,7 +52,7 @@ type Node struct {
 
 // NodeStatusTracker 用于跟踪和管理节点状态
 type NodeStatusTracker struct {
-	host                 host.Host           // libp2p主机
+	host                 host.Host           // dep2p主机
 	nodes                map[peer.ID]*Node   // 节点映射
 	defaultCheckInterval time.Duration       // 默认检查间隔
 	offlineThreshold     int                 // 离线阈值
@@ -67,7 +67,7 @@ type NodeStatusTracker struct {
 
 // NewNodeStatusTracker 创建一个新的 NodeStatusTracker 实例
 // 参数:
-//   - h: libp2p主机
+//   - h: dep2p主机
 //   - defaultCheckInterval: 默认检查间隔
 //   - offlineThreshold: 离线阈值
 //   - pingTimeout: ping超时时间

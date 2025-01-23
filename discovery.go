@@ -405,7 +405,7 @@ func (d *pubSubDiscovery) FindPeers(ctx context.Context, ns string, opts ...disc
 	return d.Discovery.FindPeers(ctx, "floodsub:"+ns, append(opts, d.opts...)...)
 }
 
-// WithDiscoveryOpts 传递 libp2p 发现选项到 PubSub 发现子系统
+// WithDiscoveryOpts 传递 dep2p 发现选项到 PubSub 发现子系统
 // 参数:
 //   - opts: 发现选项，这些选项将被应用到发现子系统中
 //

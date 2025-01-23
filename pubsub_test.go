@@ -10,14 +10,14 @@ import (
 	"github.com/dep2p/go-dep2p/core/network"
 )
 
-// getDefaultHosts 创建并返回指定数量的 libp2p 主机。
+// getDefaultHosts 创建并返回指定数量的 dep2p 主机。
 // t：测试对象
 // n：需要创建的主机数量
 func getDefaultHosts(t *testing.T, n int) []host.Host {
 	var out []host.Host
 
 	for i := 0; i < n; i++ {
-		// 创建新的 libp2p 主机，使用 NullResourceManager 禁用资源管理。
+		// 创建新的 dep2p 主机，使用 NullResourceManager 禁用资源管理。
 		h, err := dep2p.New(dep2p.ResourceManager(&network.NullResourceManager{}))
 		if err != nil {
 			t.Fatal(err)
@@ -35,7 +35,7 @@ func TestPubSubRemovesBlacklistedPeer(t *testing.T) {
 	// 创建上下文和取消函数
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// 创建两个 libp2p 主机
+	// 创建两个 dep2p 主机
 	hosts := getDefaultHosts(t, 2)
 
 	// 创建黑名单

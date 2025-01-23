@@ -25,7 +25,7 @@ type PeerMetadataStore interface {
 // 这有助于确保无论已见缓存跨度和网络直径如何，网络中都不会存在无限传播的消息。
 // 它要求 pubsub 实例化时具有严格的消息签名策略，并且序号未被禁用，即不支持匿名模式。
 //
-// 警告：请参阅 https://github.com/libp2p/rust-libp2p/issues/3453
+// 警告：请参阅 https://github.com/dep2p/rust-dep2p/issues/3453
 // 简而言之：rust 当前通过发出随机序号违反了规范，这带来了互操作性风险。
 // 我们预计此问题将在不久的将来得到解决，但如果您处于与（较旧的）rust 节点混合的环境中，请牢记这一点。
 type BasicSeqnoValidator struct {

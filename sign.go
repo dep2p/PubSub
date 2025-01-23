@@ -50,7 +50,7 @@ func (policy MessageSignaturePolicy) mustSign() bool {
 }
 
 // SignPrefix 是签名前缀常量
-const SignPrefix = "libp2p-pubsub:"
+const SignPrefix = "dep2p-pubsub:"
 
 // verifyMessageSignature 验证消息签名。
 // 参数:

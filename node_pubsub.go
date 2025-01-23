@@ -30,7 +30,7 @@ type PubSubMsgHandler func(*Message)
 type NodePubSub struct {
 	ctx              context.Context          // 上下文，用于控制goroutine的生命周期
 	cancel           context.CancelFunc       // 取消函数，用于取消上下文
-	host             host.Host                // libp2p主机，代表网络中的一个节点
+	host             host.Host                // dep2p主机，代表网络中的一个节点
 	pubsub           *PubSub                  // PubSub实例，用于发布订阅功能
 	topicLock        sync.Mutex               // 主题锁，用于保护主题映射的并发访问
 	topicMap         map[string]*Topic        // 主题映射，存储所有已创建的主题
@@ -42,7 +42,7 @@ type NodePubSub struct {
 // NewNodePubSub 创建并返回一个新的 NodePubSub 实例
 // 参数:
 //   - ctx: 上下文，用于控制PubSub实例的生命周期
-//   - host: libp2p主机，代表当前节点
+//   - host: dep2p主机，代表当前节点
 //   - opts: 节点选项，用于自定义PubSub的行为
 //
 // 返回:
@@ -542,9 +542,9 @@ func (pubsub *NodePubSub) NotifyNewPeer(peer peer.ID) error {
 	return nil
 }
 
-// Host 返回当前节点的 libp2p 主机实例
+// Host 返回当前节点的 dep2p 主机实例
 // 返回:
-//   - host.Host: 当前节点使用的 libp2p 主机实例
+//   - host.Host: 当前节点使用的 dep2p 主机实例
 func (pubsub *NodePubSub) Host() host.Host {
 	return pubsub.host
 }
