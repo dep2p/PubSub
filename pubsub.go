@@ -17,12 +17,12 @@ import (
 
 	pb "github.com/dep2p/pubsub/pb"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/libp2p/go-libp2p/core/discovery"
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/protocol"
+	"github.com/dep2p/go-dep2p/core/crypto"
+	"github.com/dep2p/go-dep2p/core/discovery"
+	"github.com/dep2p/go-dep2p/core/host"
+	"github.com/dep2p/go-dep2p/core/network"
+	"github.com/dep2p/go-dep2p/core/peer"
+	"github.com/dep2p/go-dep2p/core/protocol"
 )
 
 // DefaultMaxMessageSize 定义默认的最大消息大小为1MB

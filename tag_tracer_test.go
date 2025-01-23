@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	connmgri "github.com/libp2p/go-libp2p/core/connmgr"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
+	connmgri "github.com/dep2p/go-dep2p/core/connmgr"
+	"github.com/dep2p/go-dep2p/core/peer"
+	"github.com/dep2p/go-dep2p/p2p/net/connmgr"
 
 	pb "github.com/dep2p/pubsub/pb"
 )

@@ -5,8 +5,8 @@ import (
 
 	pb "github.com/dep2p/pubsub/pb"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/go-dep2p/core/crypto"
+	"github.com/dep2p/go-dep2p/core/peer"
 )
 
 // TestSigning 测试签名和验证功能。

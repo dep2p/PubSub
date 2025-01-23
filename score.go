@@ -10,11 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/protocol"
+	"github.com/dep2p/go-dep2p/core/host"
+	"github.com/dep2p/go-dep2p/core/peer"
+	"github.com/dep2p/go-dep2p/core/protocol"
 
-	manet "github.com/multiformats/go-multiaddr/net"
+	manet "github.com/dep2p/go-dep2p/multiformats/multiaddr/net"
 )
 
 // peerStats 包含对等节点的统计信息

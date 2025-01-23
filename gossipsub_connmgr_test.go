@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/dep2p/go-dep2p"
+	"github.com/dep2p/go-dep2p/core/host"
 
-	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
+	"github.com/dep2p/go-dep2p/core/network"
+	"github.com/dep2p/go-dep2p/core/peer"
+	"github.com/dep2p/go-dep2p/p2p/net/connmgr"
 )
 
 func TestGossipsubConnTagMessageDeliveries(t *testing.T) {
@@ -70,9 +70,9 @@ func TestGossipsubConnTagMessageDeliveries(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		h, err := libp2p.New(
-			libp2p.ResourceManager(&network.NullResourceManager{}),
-			libp2p.ConnectionManager(connmgrs[i]),
+		h, err := dep2p.New(
+			dep2p.ResourceManager(&network.NullResourceManager{}),
+			dep2p.ConnectionManager(connmgrs[i]),
 		)
 		if err != nil {
 			t.Fatal(err)

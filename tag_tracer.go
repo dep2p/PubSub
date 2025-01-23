@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/connmgr"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/protocol"
+	"github.com/dep2p/go-dep2p/core/connmgr"
+	"github.com/dep2p/go-dep2p/core/peer"
+	"github.com/dep2p/go-dep2p/core/protocol"
 )
 
 var (

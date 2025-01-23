@@ -8,14 +8,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/protocol"
+	"github.com/dep2p/go-dep2p/core/host"
+	"github.com/dep2p/go-dep2p/core/network"
+	"github.com/dep2p/go-dep2p/core/peer"
+	"github.com/dep2p/go-dep2p/core/protocol"
 
 	pb "github.com/dep2p/pubsub/pb"
 
-	"github.com/libp2p/go-msgio/protoio"
+	"github.com/dep2p/go-dep2p/p2plib/msgio/protoio"
 )
 
 // 测试当Gossipsub从同一消息ID的对等点接收到过多的IWANT消息时，是否会切断对等点

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/protocol"
+	"github.com/dep2p/go-dep2p/core/protocol"
 )
 
 // TestGossipSubMatchingFn 测试使用自定义协议匹配函数的 Gossipsub 行为。

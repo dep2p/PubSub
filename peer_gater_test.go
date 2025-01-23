@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/go-dep2p/core/peer"
 )
 
 // TestPeerGater 测试 PeerGater 的功能。

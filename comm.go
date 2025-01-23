@@ -9,15 +9,15 @@ import (
 	"io"
 	"time"
 
+	"github.com/dep2p/go-dep2p/multiformats/varint"
+	pool "github.com/dep2p/go-dep2p/p2plib/buffer/pool"
 	logging "github.com/dep2p/log"
 	pb "github.com/dep2p/pubsub/pb"
 	"github.com/gogo/protobuf/proto"
-	pool "github.com/libp2p/go-buffer-pool"
-	"github.com/multiformats/go-varint"
 
-	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-msgio"
+	"github.com/dep2p/go-dep2p/core/network"
+	"github.com/dep2p/go-dep2p/core/peer"
+	"github.com/dep2p/go-dep2p/p2plib/msgio"
 )
 
 var logger = logging.Logger("pubsub")

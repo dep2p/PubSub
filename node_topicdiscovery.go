@@ -5,11 +5,11 @@ package pubsub
 // 	"time"
 
 // 	dht "github.com/libp2p/go-libp2p-kad-dht"
-// 	"github.com/libp2p/go-libp2p/core/discovery"
-// 	"github.com/libp2p/go-libp2p/core/host"
-// 	"github.com/libp2p/go-libp2p/core/peer"
-// 	discrouting "github.com/libp2p/go-libp2p/p2p/discovery/routing"
-// 	dutil "github.com/libp2p/go-libp2p/p2p/discovery/util"
+// 	"github.com/dep2p/go-dep2p/core/discovery"
+// 	"github.com/dep2p/go-dep2p/core/host"
+// 	"github.com/dep2p/go-dep2p/core/peer"
+// 	discrouting "github.com/dep2p/go-dep2p/p2p/discovery/routing"
+// 	dutil "github.com/dep2p/go-dep2p/p2p/discovery/util"
 // )
 
 // // 创建轻量级发现服务

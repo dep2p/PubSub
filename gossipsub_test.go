@@ -13,13 +13,13 @@ import (
 
 	pb "github.com/dep2p/pubsub/pb"
 
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/peerstore"
-	"github.com/libp2p/go-libp2p/core/record"
+	"github.com/dep2p/go-dep2p/core/host"
+	"github.com/dep2p/go-dep2p/core/network"
+	"github.com/dep2p/go-dep2p/core/peer"
+	"github.com/dep2p/go-dep2p/core/peerstore"
+	"github.com/dep2p/go-dep2p/core/record"
 
-	"github.com/libp2p/go-msgio/protoio"
+	"github.com/dep2p/go-dep2p/p2plib/msgio/protoio"
 )
 
 // getGossipsub 创建一个新的 GossipSub 实例并返回。

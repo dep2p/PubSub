@@ -12,8 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/go-dep2p/core/host"
+	"github.com/dep2p/go-dep2p/core/peer"
 )
 
 // DefaultPubsubProtocol 定义了默认的pubsub协议版本
@@ -540,4 +540,11 @@ func (pubsub *NodePubSub) NotifyNewPeer(peer peer.ID) error {
 
 	logger.Infof("成功通知新节点: %s", peer.String())
 	return nil
+}
+
+// Host 返回当前节点的 libp2p 主机实例
+// 返回:
+//   - host.Host: 当前节点使用的 libp2p 主机实例
+func (pubsub *NodePubSub) Host() host.Host {
+	return pubsub.host
 }

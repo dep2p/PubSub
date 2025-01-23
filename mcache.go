@@ -6,7 +6,7 @@ package pubsub
 import (
 	"fmt"
 
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/go-dep2p/core/peer"
 )
 
 // NewMessageCache 创建一个滑动窗口缓存，记住消息长达 `history` 个插槽。

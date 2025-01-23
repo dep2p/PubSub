@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/dep2p/go-dep2p"
+	"github.com/dep2p/go-dep2p/core/host"
+	"github.com/dep2p/go-dep2p/core/network"
 )
 
 // getDefaultHosts 创建并返回指定数量的 libp2p 主机。
@@ -18,7 +18,7 @@ func getDefaultHosts(t *testing.T, n int) []host.Host {
 
 	for i := 0; i < n; i++ {
 		// 创建新的 libp2p 主机，使用 NullResourceManager 禁用资源管理。
-		h, err := libp2p.New(libp2p.ResourceManager(&network.NullResourceManager{}))
+		h, err := dep2p.New(dep2p.ResourceManager(&network.NullResourceManager{}))
 		if err != nil {
 			t.Fatal(err)
 		}

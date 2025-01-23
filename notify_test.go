@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/libp2p/go-libp2p/p2p/protocol/identify"
+	"github.com/dep2p/go-dep2p/p2p/protocol/identify"
 )
 
 // TestNotifyPeerProtocolsUpdated 测试更新后通知对等协议的功能。

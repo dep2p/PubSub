@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/dep2p/go-dep2p/core/peer"
 )
 
 // 测试注册和注销主题验证器
