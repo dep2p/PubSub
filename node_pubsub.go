@@ -449,34 +449,22 @@ func (pubsub *NodePubSub) topicSubLoop(topicSub *Subscription, handler PubSubMsg
 			continue
 		}
 
-		// 忽略自己发送的消息
-		if message.GetFrom() == pubsub.host.ID() {
-			logger.Info("忽略自己发送的消息")
+		// 解析发送者的 AddrInfo
+		var addrInfo peer.AddrInfo
+		if err := addrInfo.UnmarshalJSON(message.From); err != nil {
+			logger.Errorf("无法解析消息发送者的 AddrInfo: %s", err.Error())
 			continue
 		}
 
-		// 检查消息来源
-		if len(message.From) == 0 {
-			logger.Info("消息来源为空，跳过处理")
-			continue
-		}
-
-		// 解析发送者ID
-		pid, err := peer.IDFromBytes(message.From)
-		if err != nil {
-			logger.Errorf("无法解析消息发送者ID: %s", err.Error())
-			continue
-		}
-
-		// 再次确认消息不是自己发送的
-		if pid.String() == pubsub.host.ID().String() {
+		// 使用 addrInfo.ID 替代直接从 From 解析的 peer.ID
+		if addrInfo.ID.String() == pubsub.host.ID().String() {
 			logger.Info("再次确认消息来自自己，跳过处理")
 			continue
 		}
 
 		// 创建处理消息的上下文
 		msgCtx, cancel := context.WithTimeout(pubsub.ctx, 15*time.Second)
-		logger.Infof("开始处理来自节点 %s 的消息", pid.String())
+		logger.Infof("开始处理来自节点 %s 的消息", addrInfo.ID.String())
 
 		// 异步处理消息
 		go func(ctx context.Context, msg *Message) {

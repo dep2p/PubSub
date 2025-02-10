@@ -284,66 +284,6 @@ type PubOpt func(pub *PublishOptions) error
 // 返回值:
 // - []byte: 接收到的回复消息
 // - error: 如果出现错误，返回错误信息
-// func (t *Topic) PublishWithReply(ctx context.Context, data []byte, targetNodes ...peer.ID) ([]byte, error) {
-// 	msgID := uuid.New().String()      // 生成一个唯一的消息 ID，用于匹配回复
-// 	replyChan := make(chan []byte, 1) // 创建一个带缓冲的通道，用于接收回复
-
-// 	t.mux.Lock()                   // 加锁以保护共享数据结构的访问
-// 	t.p.replies[msgID] = replyChan // 将消息 ID 和通道关联存储到 replies map 中
-// 	t.mux.Unlock()                 // 解锁
-
-// 	var err error
-// 	for i := 0; i < t.p.retry; i++ { // 循环执行重试机制
-// 		pubOpts := []PubOpt{
-// 			WithReadiness(MinTopicSize(numHosts)),                  // 设置对等节点准备
-// 			WithMessageMetadata(msgID, pb.MessageMetadata_REQUEST), // 设置消息元数据
-// 		}
-
-// 		// 只有在提供了目标节点时才添加 WithTargetMap 选项
-// 		if len(targetNodes) > 0 {
-// 			pubOpts = append(pubOpts, WithTargetMap(targetNodes))
-// 		}
-
-// 		err = t.Publish(ctx, data, pubOpts...)
-// 		if err == nil { // 如果发布成功，退出循环
-// 			break
-// 		}
-// 		logger.Printf("第 %d 次发布尝试失败: %v", i+1, err)
-// 		time.Sleep(500 * time.Millisecond) // 在重试之间添加短暂的延迟
-// 	}
-
-// 	if err != nil { // 如果经过多次重试仍然失败
-// 		return nil, fmt.Errorf("多次重试后发布消息失败: %d 次重试后失败: %v", t.p.retry, err)
-// 	}
-
-// 	select {
-// 	case reply := <-replyChan: // 如果收到回复
-// 		return reply, nil // 返回收到的回复
-// 	case <-time.After(t.p.timeout): // 如果等待超时
-// 		return nil, errors.New("等待回复超时")
-// 	}
-// }
-
-// PublishWithReply 发送消息并等待响应
-//
-// 使用示例:
-//
-//	// 不指定目标节点
-//	reply, err := topic.PublishWithReply(ctx, data)
-//
-//	// 指定一个目标节点
-//	reply, err := topic.PublishWithReply(ctx, data, peerID1)
-//
-//	// 指定多个目标节点
-//	reply, err := topic.PublishWithReply(ctx, data, peerID1, peerID2, peerID3)
-//
-// 参数:
-// - ctx: context.Context 表示上下文，用于控制流程
-// - data: []byte 表示要发送的消息内容
-// - targetNodes: ...peer.ID 表示需要将消息发送到的目标节点列表（可选）
-// 返回值:
-// - []byte: 接收到的回复消息
-// - error: 如果出现错误，返回错误信息
 func (t *Topic) PublishWithReply(ctx context.Context, data []byte, targetNodes ...peer.ID) ([]byte, error) {
 	// 基础配置
 	const (

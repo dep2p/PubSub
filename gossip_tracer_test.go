@@ -22,7 +22,16 @@ func TestBrokenPromises(t *testing.T) {
 	var mids []string
 	for i := 0; i < 100; i++ {
 		m := makeTestMessage(i)
-		m.From = []byte(peerA)
+		// 创建并序列化 AddrInfo
+		addrInfo := peer.AddrInfo{
+			ID:    peerA,
+			Addrs: nil,
+		}
+		addrInfoBytes, err := addrInfo.MarshalJSON()
+		if err != nil {
+			t.Fatalf("序列化 AddrInfo 失败: %v", err)
+		}
+		m.From = addrInfoBytes
 		mid := DefaultMsgIdFn(m)
 		mids = append(mids, mid)
 	}
@@ -80,7 +89,16 @@ func TestNoBrokenPromises(t *testing.T) {
 	var mids []string
 	for i := 0; i < 100; i++ {
 		m := makeTestMessage(i)
-		m.From = []byte(peerA)
+		// 创建并序列化 AddrInfo
+		addrInfo := peer.AddrInfo{
+			ID:    peerA,
+			Addrs: nil,
+		}
+		addrInfoBytes, err := addrInfo.MarshalJSON()
+		if err != nil {
+			t.Fatalf("序列化 AddrInfo 失败: %v", err)
+		}
+		m.From = addrInfoBytes
 		msgs = append(msgs, m)
 		mid := DefaultMsgIdFn(m)
 		mids = append(mids, mid)

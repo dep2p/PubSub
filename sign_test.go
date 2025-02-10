@@ -35,11 +35,22 @@ func testSignVerify(t *testing.T, privk crypto.PrivKey) {
 	if err != nil {
 		t.Fatal(err) // 如果生成 peer ID 失败，则记录错误并终止测试
 	}
-	topic := "foo" // 定义消息的主题
+
+	topic := "foo"
+	// 创建并序列化 AddrInfo
+	addrInfo := peer.AddrInfo{
+		ID:    id,
+		Addrs: nil,
+	}
+	addrInfoBytes, err := addrInfo.MarshalJSON()
+	if err != nil {
+		t.Fatalf("序列化 AddrInfo 失败: %v", err)
+	}
+
 	m := pb.Message{
 		Data:  []byte("abc"), // 消息内容
 		Topic: topic,         // 消息主题
-		From:  []byte(id),    // 发送者的 peer ID
+		From:  addrInfoBytes, // 发送者的 peer ID
 		Seqno: []byte("123"), // 消息序列号
 	}
 	// 对消息进行签名

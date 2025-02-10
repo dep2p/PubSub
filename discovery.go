@@ -171,7 +171,11 @@ func (d *discover) pollTimer() {
 func (d *discover) requestDiscovery() {
 	for t := range d.p.myTopics { // 遍历所有主题
 		if !d.p.rt.EnoughPeers(t, 0) { // 检查是否有足够的对等节点
-			d.discoverQ <- &discoverReq{topic: t, done: make(chan struct{}, 1)} // 发送发现请求
+			d.discoverQ <- &discoverReq{
+				topic: t,                      // 主题
+				opts:  []discovery.Option{},   // 发现选项
+				done:  make(chan struct{}, 1), // 完成通道
+			} // 发送发现请求
 		}
 	}
 }

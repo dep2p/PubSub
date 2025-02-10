@@ -29,8 +29,6 @@ const (
 	GossipSubID_v10 = protocol.ID("/meshsub/1.0.0")
 
 	// GossipSubID_v11 是 GossipSub 协议的版本 1.1.0 的协议 ID。
-	// 参见规范了解 v1.1.0 与 v1.0.0 的详细比较：
-	// https://github.com/dep2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.1.md
 	GossipSubID_v11 = protocol.ID("/meshsub/1.1.0")
 )
 

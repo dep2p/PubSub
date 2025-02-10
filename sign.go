@@ -97,33 +97,37 @@ func verifyMessageSignature(m *pb.Message) error {
 // - error: 错误信息，如果有的话
 func messagePubKey(m *pb.Message) (crypto.PubKey, error) {
 	var pubk crypto.PubKey
+	var err error
 
-	pid, err := peer.IDFromBytes(m.From) // 从消息中提取 peer.ID
-	if err != nil {
-		return nil, err
+	// 从 From 字段解析 AddrInfo
+	var addrInfo peer.AddrInfo
+	if err := addrInfo.UnmarshalJSON(m.From); err != nil {
+		return nil, fmt.Errorf("无法解析 AddrInfo: %w", err)
 	}
+
+	pid := addrInfo.ID
 
 	if m.Key == nil {
 		// 没有附加密钥，必须从源 ID 提取
-		pubk, err = pid.ExtractPublicKey() // 提取公钥
+		pubk, err = pid.ExtractPublicKey()
 		if err != nil {
-			logger.Warnf("提取签名密钥失败: %s", err.Error()) // 提取签名密钥失败
+			logger.Warnf("提取签名密钥失败: %s", err.Error())
 			return nil, fmt.Errorf("无法提取签名密钥: %s", err.Error())
 		}
 		if pubk == nil {
-			logger.Warnf("无法提取签名密钥") // 无法提取签名密钥
+			logger.Warnf("无法提取签名密钥")
 			return nil, fmt.Errorf("无法提取签名密钥")
 		}
 	} else {
-		pubk, err = crypto.UnmarshalPublicKey(m.Key) // 解码公钥
+		pubk, err = crypto.UnmarshalPublicKey(m.Key)
 		if err != nil {
-			logger.Warnf("解码签名密钥失败: %s", err.Error()) // 解码签名密钥失败
+			logger.Warnf("解码签名密钥失败: %s", err.Error())
 			return nil, fmt.Errorf("无法解码签名密钥: %s", err.Error())
 		}
 
 		// 验证源 ID 与附加密钥是否匹配
 		if !pid.MatchesPublicKey(pubk) {
-			logger.Warnf("签名密钥与源ID不匹配: %s", pid) // 签名密钥与源ID不匹配
+			logger.Warnf("签名密钥与源ID不匹配: %s", pid)
 			return nil, fmt.Errorf("签名密钥与源ID不匹配: %s", pid)
 		}
 	}
@@ -139,6 +143,22 @@ func messagePubKey(m *pb.Message) (crypto.PubKey, error) {
 // 返回值:
 // - error: 错误信息，如果有的话
 func signMessage(pid peer.ID, key crypto.PrivKey, m *pb.Message) error {
+	// 创建 AddrInfo
+	addrInfo := peer.AddrInfo{
+		ID: pid,
+		// 如果需要，可以从其他地方获取地址列表
+		Addrs: nil,
+	}
+
+	// 序列化 AddrInfo
+	addrInfoBytes, err := addrInfo.MarshalJSON()
+	if err != nil {
+		return fmt.Errorf("序列化 AddrInfo 失败: %w", err)
+	}
+
+	// 设置消息的 From 字段
+	m.From = addrInfoBytes
+
 	bytes, err := m.Marshal() // 序列化消息
 	if err != nil {
 		logger.Warnf("序列化消息失败: %s", err) // 序列化消息失败

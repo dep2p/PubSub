@@ -722,10 +722,20 @@ func TestGossipsubAttackInvalidMessageSpam(t *testing.T) {
 
 					// 发送一堆没有签名的消息（这些消息将失败验证并降低攻击者的分数）
 					for i := 0; i < 100; i++ {
+						// 创建并序列化 AddrInfo
+						addrInfo := peer.AddrInfo{
+							ID:    attacker.ID(),
+							Addrs: nil,
+						}
+						addrInfoBytes, err := addrInfo.MarshalJSON()
+						if err != nil {
+							t.Fatalf("序列化 AddrInfo 失败: %v", err)
+						}
+
 						msg := &pb.Message{
 							Data:  []byte("some data" + strconv.Itoa(i)),
 							Topic: mytopic,
-							From:  []byte(attacker.ID()),
+							From:  addrInfoBytes,
 							Seqno: []byte{byte(i + 1)},
 						}
 						writeMsg(&pb.RPC{

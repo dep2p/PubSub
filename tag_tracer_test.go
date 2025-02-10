@@ -110,10 +110,20 @@ func TestTagTracerDeliveryTags(t *testing.T) {
 		if i < 5 {
 			topic = topic2
 		}
+		// 创建并序列化 AddrInfo
+		addrInfo := peer.AddrInfo{
+			ID:    p,
+			Addrs: nil,
+		}
+		addrInfoBytes, err := addrInfo.MarshalJSON()
+		if err != nil {
+			t.Fatalf("序列化 AddrInfo 失败: %v", err)
+		}
+
 		msg := &Message{
 			ReceivedFrom: p,
 			Message: &pb.Message{
-				From:  []byte(p),
+				From:  addrInfoBytes,
 				Data:  []byte("hello"),
 				Topic: topic,
 			},
@@ -193,10 +203,20 @@ func TestTagTracerDeliveryTagsNearFirst(t *testing.T) {
 	tt.Join(topic)
 
 	for i := 0; i < GossipSubConnTagMessageDeliveryCap+5; i++ {
+		// 创建并序列化 AddrInfo
+		addrInfo := peer.AddrInfo{
+			ID:    p,
+			Addrs: nil,
+		}
+		addrInfoBytes, err := addrInfo.MarshalJSON()
+		if err != nil {
+			t.Fatalf("序列化 AddrInfo 失败: %v", err)
+		}
+
 		msg := &Message{
 			ReceivedFrom: p,
 			Message: &pb.Message{
-				From:  []byte(p),
+				From:  addrInfoBytes,
 				Data:  []byte(fmt.Sprintf("msg-%d", i)),
 				Topic: topic,
 				Seqno: []byte(fmt.Sprintf("%d", i)),
