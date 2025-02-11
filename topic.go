@@ -248,11 +248,11 @@ type ProvideKey func() (crypto.PrivKey, peer.ID)
 
 // PublishOptions 表示发布选项。
 type PublishOptions struct {
-	ready     RouterReady        // 准备好路由的回调函数
-	customKey ProvideKey         // 自定义密钥的提供函数
-	local     bool               // 是否为本地发布
-	targetMap []peer.ID          // 目标节点列表
-	metadata  MessageMetadataOpt // 消息元信息
+	ready     RouterReady
+	customKey func() (crypto.PrivKey, peer.AddrInfo) // 修改返回类型为 peer.AddrInfo
+	local     bool
+	targetMap []peer.ID
+	metadata  MessageMetadataOpt
 }
 
 // MessageMetadataOpt 表示消息元信息的选项。
@@ -446,8 +446,13 @@ func (t *Topic) Publish(ctx context.Context, data []byte, opts ...PubOpt) error 
 	// 	return fmt.Errorf("消息数据不能为空")
 	// }
 
-	pid := t.p.signID  // 获取发布者的对等节点 ID
-	key := t.p.signKey // 获取发布者的签名密钥
+	addrInfo := t.p.signID
+	addrInfoByte, err := addrInfo.MarshalJSON()
+	if err != nil {
+		logger.Warnf("无法序列化消息发送者的 AddrInfo: %s", err.Error())
+		return err
+	}
+	key := t.p.signKey
 
 	pub := &PublishOptions{}   // 初始化发布选项
 	for _, opt := range opts { // 遍历所有发布选项并应用
@@ -458,14 +463,14 @@ func (t *Topic) Publish(ctx context.Context, data []byte, opts ...PubOpt) error 
 		}
 	}
 
-	// 创建消息对象，初始时 Metadata 赋值为 nil
+	// 创建消息对象时使用 AddrInfo
 	m := &pb.Message{
-		Data:     data,    // 消息数据
-		Topic:    t.topic, // 主题名称
-		From:     nil,     // 发送者
-		Seqno:    nil,     // 序列号
-		Targets:  nil,     // 目标节点初始为空
-		Metadata: nil,     // Metadata 初始为 nil
+		Data:     data,         // 消息数据
+		Topic:    t.topic,      // 主题名称
+		From:     addrInfoByte, // 发送者
+		Seqno:    nil,          // 序列号
+		Targets:  nil,          // 目标节点初始为空
+		Metadata: nil,          // Metadata 初始为 nil
 	}
 
 	if pub.metadata.messageID != "" {
@@ -482,16 +487,16 @@ func (t *Topic) Publish(ctx context.Context, data []byte, opts ...PubOpt) error 
 		}
 	}
 
-	if pid != "" { // 如果存在对等节点 ID
-		m.From = []byte(pid)      // 设置发送者的对等节点 ID
-		m.Seqno = t.p.nextSeqno() // 获取并设置消息序列号
+	if addrInfo.ID != "" {
+		// 生成序列号
+		m.Seqno = t.p.nextSeqno()
 	}
-	if key != nil { // 如果存在签名密钥
-		m.From = []byte(pid)            // 再次设置发送者的对等节点 ID（确保存在）
-		err := signMessage(pid, key, m) // 签署消息
-		if err != nil {
-			logger.Warnf("签署消息失败: %s", err) // 如果签署消息出错，返回错误
-			return err                      // 如果签署消息出错，返回错误
+
+	if key != nil {
+		// 签名消息
+		if err := signMessage(addrInfo.ID, key, m); err != nil {
+			logger.Warnf("签署消息失败: %s", err)
+			return err
 		}
 	}
 
@@ -594,16 +599,15 @@ func WithLocalPublication(local bool) PubOpt {
 // 这个选项在我们希望从网络中的"虚拟"不可连接的对等节点发送消息时非常有用。
 // 参数:
 // - key: crypto.PrivKey 类型，自定义私钥。
-// - pid: peer.ID 类型，对应的对等节点 ID。
+// - pid: peer.AddrInfo 类型，对应的对等节点 ID。
 // 返回值:
 // - PubOpt: 返回一个发布选项函数，用于设置 PublishOptions 中的 customKey 字段。
-func WithSecretKeyAndPeerId(key crypto.PrivKey, pid peer.ID) PubOpt {
+func WithSecretKeyAndPeerId(key crypto.PrivKey, pid peer.AddrInfo) PubOpt {
 	return func(pub *PublishOptions) error {
-		pub.customKey = func() (crypto.PrivKey, peer.ID) {
-			return key, pid // 返回自定义的私钥和对等节点 ID
+		pub.customKey = func() (crypto.PrivKey, peer.AddrInfo) {
+			return key, pid // 返回自定义的私钥和 AddrInfo
 		}
-
-		return nil // 返回 nil 表示没有错误
+		return nil
 	}
 }
 

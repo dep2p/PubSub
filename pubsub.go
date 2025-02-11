@@ -174,7 +174,7 @@ type PubSub struct {
 	signKey crypto.PrivKey // 签名消息的私钥，用于对消息进行签名，确保消息的真实性
 	// 签名消息的源 ID，对应于 signKey，如果签名被禁用则为空。
 	// 如果为空，则消息中完全省略作者和序列号。
-	signID peer.ID // 签名消息的对等节点 ID，用于标识消息的签名者
+	signID peer.AddrInfo // 签名 ID,用于标识消息发送者
 	// 严格模式在验证之前拒绝所有未签名的消息
 	signPolicy MessageSignaturePolicy // 签名消息的策略，用于控制如何处理未签名的消息
 
@@ -292,6 +292,11 @@ type Option func(*PubSub) error
 //   - error: 如果有错误发生，返回错误。
 func NewPubSub(ctx context.Context, h host.Host, rt PubSubRouter, opts ...Option) (*PubSub, error) {
 	// 初始化 PubSub 对象
+	addrInfo := peer.AddrInfo{
+		ID:    h.ID(),
+		Addrs: h.Addrs(),
+	}
+
 	ps := &PubSub{
 		host:                  h,                                                                 // dep2p 主机
 		ctx:                   ctx,                                                               // 上下文
@@ -301,7 +306,7 @@ func NewPubSub(ctx context.Context, h host.Host, rt PubSubRouter, opts ...Option
 		disc:                  &discover{},                                                       // 发现模块
 		maxMessageSize:        DefaultMaxMessageSize,                                             // 最大消息大小
 		peerOutboundQueueSize: 32,                                                                // 出站消息队列大小
-		signID:                h.ID(),                                                            // 签名 ID
+		signID:                addrInfo,                                                          // 使用 AddrInfo 替代原来的 ID
 		signKey:               nil,                                                               // 签名密钥
 		signPolicy:            StrictSign,                                                        // 签名策略
 		incoming:              make(chan *RPC, 32),                                               // 传入消息通道
@@ -353,14 +358,14 @@ func NewPubSub(ctx context.Context, h host.Host, rt PubSubRouter, opts ...Option
 	// 检查签名策略是否必须签名
 	if ps.signPolicy.mustSign() {
 		// 如果签名策略要求消息必须签名，但签名 ID 未设置，则返回错误
-		if ps.signID == "" {
+		if ps.signID.ID == "" {
 			return nil, fmt.Errorf("strict signature usage enabled but message author was disabled")
 		}
 		// 从主机的 Peerstore 中获取对应签名 ID 的私钥
-		ps.signKey = ps.host.Peerstore().PrivKey(ps.signID)
+		ps.signKey = ps.host.Peerstore().PrivKey(ps.signID.ID)
 		if ps.signKey == nil {
 			// 如果无法获取签名私钥，则返回错误
-			return nil, fmt.Errorf("can't sign for peer %s: no private key", ps.signID)
+			return nil, fmt.Errorf("can't sign for peer %s: no private key", ps.signID.ID)
 		}
 	}
 
@@ -520,7 +525,12 @@ func WithMessageAuthor(author peer.ID) Option {
 		if author == "" {
 			author = p.host.ID()
 		}
-		p.signID = author
+		// 创建完整的 AddrInfo
+		addrInfo := peer.AddrInfo{
+			ID:    author,
+			Addrs: p.host.Peerstore().Addrs(author),
+		}
+		p.signID = addrInfo
 		return nil
 	}
 }
@@ -531,7 +541,7 @@ func WithMessageAuthor(author peer.ID) Option {
 //   - Option: 配置选项。
 func WithNoAuthor() Option {
 	return func(p *PubSub) error {
-		p.signID = ""
+		p.signID = peer.AddrInfo{}
 		p.signPolicy &^= msgSigning
 		return nil
 	}
@@ -1502,7 +1512,7 @@ func (p *PubSub) checkSigningPolicy(msg *Message) error {
 			// 则不接受序列号、来源数据或密钥数据。
 			// 默认的 msgID 函数仍然依赖于 Seqno 和 From，
 			// 但如果我们不自己创建消息，则不会使用它。
-			if p.signID == "" {
+			if p.signID.ID == "" {
 				if msg.Seqno != nil || msg.From != nil || msg.Key != nil {
 					p.tracer.RejectMessage(msg, RejectUnexpectedAuthInfo)
 					return ValidationError{Reason: RejectUnexpectedAuthInfo}
@@ -1683,13 +1693,15 @@ type SubOpt func(sub *Subscription) error
 //
 // 已弃用：请使用 pubsub.Join() 和 topic.Subscribe()
 func (p *PubSub) Subscribe(topic string, opts ...SubOpt) (*Subscription, error) {
-	// 忽略主题是新创建的还是已有的，因为无论哪种方式我们都有一个有效的主题可以使用
-	topicHandle, _, err := p.tryJoin(topic)
+	// ...
+	// Subscribe 内部会调用 Join
+	t, err := p.Join(topic)
 	if err != nil {
 		return nil, err
 	}
+	// ...
 
-	return topicHandle.Subscribe(opts...)
+	return t.Subscribe(opts...)
 }
 
 // WithBufferSize 是一个订阅选项，用于自定义订阅输出缓冲区的大小。

@@ -44,6 +44,8 @@ func tryReceive(sub *Subscription) *Message {
 	if err != nil {
 		return nil
 	} else {
+		// 使用正确的日志包打印消息
+		logger.Infof("节点 %s 收到消息: %s", sub.topic, string(m.Data))
 		return m
 	}
 }
@@ -63,10 +65,20 @@ func TestRandomsubSmall(t *testing.T) {
 	// 连接所有主机
 	connectAll(t, hosts)
 
-	// 订阅 "test" 主题
-	var subs []*Subscription
+	// 先获取所有节点的 Topic 对象
+	var topics []*Topic
 	for _, ps := range psubs {
-		sub, err := ps.Subscribe("test")
+		topic, err := ps.Join("test") // 获取 Topic 对象用于发布
+		if err != nil {
+			t.Fatal(err)
+		}
+		topics = append(topics, topic)
+	}
+
+	// 订阅主题
+	var subs []*Subscription
+	for _, topic := range topics {
+		sub, err := topic.Subscribe() // 使用 Topic 对象订阅
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -74,26 +86,28 @@ func TestRandomsubSmall(t *testing.T) {
 	}
 
 	// 等待订阅建立
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 
-	// 发布 10 条消息并统计接收情况
+	// 发布消息
 	count := 0
 	for i := 0; i < 10; i++ {
 		msg := []byte(fmt.Sprintf("message %d", i))
+		logger.Infof("节点 %s 发布消息: %s", topics[i].String(), string(msg))
 
-		topic, err := psubs[i].Join("test")
-		if err != nil {
+		if err := topics[i].Publish(ctx, msg); err != nil {
 			t.Fatal(err)
 		}
 
-		topic.Publish(ctx, msg)
-
-		for _, sub := range subs {
-			if tryReceive(sub) != nil {
+		for j, sub := range subs {
+			if m := tryReceive(sub); m != nil {
 				count++
+				logger.Infof("节点 %d 成功接收消息，当前接收计数: %d", j, count)
 			}
 		}
 	}
+
+	// 等待消息传播
+	time.Sleep(time.Second)
 
 	// 检查接收到的消息数量是否符合预期
 	if count < 7*len(hosts) {
@@ -104,22 +118,28 @@ func TestRandomsubSmall(t *testing.T) {
 // TestRandomsubBig 测试随机订阅的大规模场景。
 // 创建 50 个主机和 PubSub 实例，订阅主题并发送消息，验证消息接收情况。
 func TestRandomsubBig(t *testing.T) {
-	// 创建上下文和取消函数
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// 创建 50 个默认主机
 	hosts := getDefaultHosts(t, 50)
-	// 创建 50 个带有随机订阅的 PubSub 实例
 	psubs := getRandomsubs(ctx, hosts, 50)
 
-	// 连接部分主机
 	connectSome(t, hosts, 12)
 
-	// 订阅 "test" 主题
-	var subs []*Subscription
+	// 先获取所有节点的 Topic 对象
+	var topics []*Topic
 	for _, ps := range psubs {
-		sub, err := ps.Subscribe("test")
+		topic, err := ps.Join("test") // 获取 Topic 对象用于发布
+		if err != nil {
+			t.Fatal(err)
+		}
+		topics = append(topics, topic)
+	}
+
+	// 订阅主题
+	var subs []*Subscription
+	for _, topic := range topics {
+		sub, err := topic.Subscribe() // 使用 Topic 对象订阅
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -127,25 +147,28 @@ func TestRandomsubBig(t *testing.T) {
 	}
 
 	// 等待订阅建立
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 
-	// 发布 10 条消息并统计接收情况
+	// 发布消息
 	count := 0
 	for i := 0; i < 10; i++ {
 		msg := []byte(fmt.Sprintf("message %d", i))
-		topic, err := psubs[i].Join("test")
-		if err != nil {
+		logger.Infof("节点 %s 发布消息: %s", topics[i].String(), string(msg))
+
+		if err := topics[i].Publish(ctx, msg); err != nil {
 			t.Fatal(err)
 		}
 
-		topic.Publish(ctx, msg)
-
-		for _, sub := range subs {
-			if tryReceive(sub) != nil {
+		for j, sub := range subs {
+			if m := tryReceive(sub); m != nil {
 				count++
+				logger.Infof("节点 %d 成功接收消息，当前接收计数: %d", j, count)
 			}
 		}
 	}
+
+	// 等待消息传播
+	time.Sleep(time.Second)
 
 	// 检查接收到的消息数量是否符合预期
 	if count < 7*len(hosts) {
@@ -181,18 +204,22 @@ func TestRandomsubMixed(t *testing.T) {
 	}
 
 	// 等待订阅建立
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 
 	// 发布 10 条消息并统计接收情况
 	count := 0
 	for i := 0; i < 10; i++ {
 		msg := []byte(fmt.Sprintf("message %d", i))
+
 		topic, err := psubs[i].Join("test")
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		topic.Publish(ctx, msg)
+		err = topic.Publish(ctx, msg)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		for _, sub := range subs {
 			if tryReceive(sub) != nil {
@@ -200,6 +227,9 @@ func TestRandomsubMixed(t *testing.T) {
 			}
 		}
 	}
+
+	// 等待消息传播
+	time.Sleep(time.Second)
 
 	// 检查接收到的消息数量是否符合预期
 	if count < 7*len(hosts) {
@@ -233,7 +263,7 @@ func TestRandomsubEnoughPeers(t *testing.T) {
 	}
 
 	// 等待订阅建立
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 
 	// 验证是否有足够的 peers
 	res := make(chan bool, 1)
