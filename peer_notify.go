@@ -231,9 +231,9 @@ func (ps *PubSub) NotifyNewPeer(peer peer.ID) error {
 	// 8. 通知处理循环
 	select {
 	case ps.newPeers <- struct{}{}:
-		logger.Infof("已通知处理循环新节点 %s 的加入", peer.String())
+		// logger.Infof("已通知处理循环新节点 %s 的加入", peer.String())
 	default:
-		logger.Warnf("通知通道已满，节点 %s 将在下一轮处理", peer.String())
+		// logger.Warnf("通知通道已满，节点 %s 将在下一轮处理", peer.String())
 	}
 
 	return nil

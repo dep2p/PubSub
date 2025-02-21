@@ -293,12 +293,12 @@ func (t *Topic) PublishWithReply(ctx context.Context, data []byte, targetNodes .
 		maxTimeout  = 60 * time.Second // 最大超时时间
 	)
 
-	logger.Infof("开始发布消息并等待回复，目标节点数量: %d", len(targetNodes))
+	// logger.Infof("开始发布消息并等待回复，目标节点数量: %d", len(targetNodes))
 
 	// 上下文检查
 	if ctx == nil {
 		ctx = context.Background()
-		logger.Info("使用默认上下文")
+		// logger.Info("使用默认上下文")
 	}
 
 	// 创建带超时的上下文
@@ -308,7 +308,7 @@ func (t *Topic) PublishWithReply(ctx context.Context, data []byte, targetNodes .
 	// 生成消息ID和回复通道
 	msgID := uuid.New().String()
 	replyChan := make(chan []byte, 1)
-	logger.Infof("生成消息ID: %s", msgID)
+	// logger.Infof("生成消息ID: %s", msgID)
 
 	// 注册回复通道并确保清理
 	t.mux.Lock()
@@ -324,25 +324,25 @@ func (t *Topic) PublishWithReply(ctx context.Context, data []byte, targetNodes .
 		t.mux.Lock()
 		delete(t.p.replies, msgID)
 		t.mux.Unlock()
-		logger.Infof("清理消息ID: %s 的回复通道", msgID)
+		// logger.Infof("清理消息ID: %s 的回复通道", msgID)
 	}()
 
 	// 检查并过滤目标节点
 	var validTargets []peer.ID
 	if len(targetNodes) > 0 {
-		logger.Info("开始验证目标节点")
+		// logger.Info("开始验证目标节点")
 		for _, target := range targetNodes {
 			// 检查节点连接状态
 			switch t.p.host.Network().Connectedness(target) {
 			case network.Connected:
 				validTargets = append(validTargets, target)
-				logger.Infof("节点 %s 已连接", target)
+				// logger.Infof("节点 %s 已连接", target)
 			default:
-				logger.Infof("尝试连接节点 %s", target)
+				// logger.Infof("尝试连接节点 %s", target)
 				// 尝试连接
 				if err := t.p.host.Connect(timeoutCtx, peer.AddrInfo{ID: target}); err == nil {
 					validTargets = append(validTargets, target)
-					logger.Infof("成功连接节点 %s", target)
+					// logger.Infof("成功连接节点 %s", target)
 				} else {
 					logger.Warnf("连接节点 %s 失败: %v", target, err)
 				}
@@ -353,7 +353,7 @@ func (t *Topic) PublishWithReply(ctx context.Context, data []byte, targetNodes .
 			logger.Error("没有可用的目标节点")
 			return nil, fmt.Errorf("没有可用的目标节点")
 		}
-		logger.Infof("有效目标节点数量: %d", len(validTargets))
+		// logger.Infof("有效目标节点数量: %d", len(validTargets))
 	}
 
 	// 发布消息（带重试）
@@ -364,7 +364,7 @@ func (t *Topic) PublishWithReply(ctx context.Context, data []byte, targetNodes .
 				logger.Error("发布超时")
 				return timeoutCtx.Err()
 			default:
-				logger.Infof("开始第 %d/%d 次发布尝试", i+1, retryCount)
+				// logger.Infof("开始第 %d/%d 次发布尝试", i+1, retryCount)
 				// 构建发布选项
 				pubOpts := []PubOpt{
 					WithMessageMetadata(msgID, pb.MessageMetadata_REQUEST),
@@ -377,7 +377,7 @@ func (t *Topic) PublishWithReply(ctx context.Context, data []byte, targetNodes .
 
 				// 发布消息
 				if err := t.Publish(timeoutCtx, data, pubOpts...); err == nil {
-					logger.Infof("第 %d 次发布成功", i+1)
+					// logger.Infof("第 %d 次发布成功", i+1)
 					return nil
 				} else {
 					logger.Warnf("发布尝试 %d/%d 失败: %v", i+1, retryCount, err)
@@ -395,7 +395,7 @@ func (t *Topic) PublishWithReply(ctx context.Context, data []byte, targetNodes .
 					logger.Error("重试等待时超时")
 					return timeoutCtx.Err()
 				case <-timer.C:
-					logger.Infof("准备第 %d 次重试", i+2)
+					// logger.Infof("准备第 %d 次重试", i+2)
 					continue
 				}
 			}
@@ -410,14 +410,14 @@ func (t *Topic) PublishWithReply(ctx context.Context, data []byte, targetNodes .
 	}
 
 	// 等待响应
-	logger.Info("等待响应...")
+	// logger.Info("等待响应...")
 	select {
 	case reply := <-replyChan:
 		if len(reply) == 0 {
 			logger.Error("收到空响应")
 			return nil, fmt.Errorf("收到空响应")
 		}
-		logger.Infof("成功收到响应，长度: %d bytes", len(reply))
+		// logger.Infof("成功收到响应，长度: %d bytes", len(reply))
 		return reply, nil
 	case <-timeoutCtx.Done():
 		logger.Errorf("等待响应超时（%v）", maxTimeout)

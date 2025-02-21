@@ -188,19 +188,19 @@ func (pubsub *NodePubSub) startPubSub(options *Options) error {
 
 	switch options.GetPubSubMode() {
 	case FloodSub:
-		ps, err = NewFloodSub(pubsub.ctx, pubsub.host, pubsubOpts...)
-		if err == nil {
-			logger.Info("flood-sub 服务已启动")
-		}
+		ps, _ = NewFloodSub(pubsub.ctx, pubsub.host, pubsubOpts...)
+		// if err == nil {
+		// 	logger.Info("flood-sub 服务已启动")
+		// }
 	case RandomSub:
 		return fmt.Errorf("暂不支持RandomSub")
 	case GossipSub:
 		fallthrough
 	default:
-		ps, err = NewGossipSub(pubsub.ctx, pubsub.host, pubsubOpts...)
-		if err == nil {
-			logger.Info("gossip-sub 服务已启动")
-		}
+		ps, _ = NewGossipSub(pubsub.ctx, pubsub.host, pubsubOpts...)
+		// if err == nil {
+		// 	logger.Info("gossip-sub 服务已启动")
+		// }
 	}
 
 	if err != nil {
@@ -265,7 +265,7 @@ func (pubsub *NodePubSub) Subscribe(topic string, subscribe bool) (*Subscription
 		return nil, err
 	}
 
-	logger.Infof("订阅主题 [%s]", topic)
+	// logger.Infof("订阅主题 [%s]", topic)
 
 	// 如果需要订阅，则返回订阅实例
 	if subscribe {
@@ -422,11 +422,11 @@ func (pubsub *NodePubSub) SubscribeWithTopic(topic string, handler PubSubMsgHand
 //   - topicSub: 表示订阅的主题
 //   - handler: 表示处理消息的回调函数
 func (pubsub *NodePubSub) topicSubLoop(topicSub *Subscription, handler PubSubMsgHandler) {
-	logger.Info("开始订阅消息循环")
+	// logger.Info("开始订阅消息循环")
 
 	for {
 		// 获取下一条消息
-		logger.Info("等待接收下一条消息...")
+		// logger.Info("等待接收下一条消息...")
 		message, err := topicSub.Next(pubsub.ctx)
 
 		// 错误处理
@@ -436,7 +436,7 @@ func (pubsub *NodePubSub) topicSubLoop(topicSub *Subscription, handler PubSubMsg
 				break
 			}
 			if err.Error() == "context canceled" {
-				logger.Infof("上下文已取消，退出消息循环: %v", err)
+				// logger.Infof("上下文已取消，退出消息循环: %v", err)
 				break
 			}
 			logger.Errorf("接收消息失败: %s", err.Error())
@@ -445,7 +445,7 @@ func (pubsub *NodePubSub) topicSubLoop(topicSub *Subscription, handler PubSubMsg
 
 		// 消息有效性检查
 		if message == nil {
-			logger.Info("收到空消息，跳过处理")
+			// logger.Info("收到空消息，跳过处理")
 			continue
 		}
 
@@ -458,13 +458,13 @@ func (pubsub *NodePubSub) topicSubLoop(topicSub *Subscription, handler PubSubMsg
 
 		// 使用 addrInfo.ID 替代直接从 From 解析的 peer.ID
 		if addrInfo.ID.String() == pubsub.host.ID().String() {
-			logger.Info("再次确认消息来自自己，跳过处理")
+			// logger.Info("再次确认消息来自自己，跳过处理")
 			continue
 		}
 
 		// 创建处理消息的上下文
 		msgCtx, cancel := context.WithTimeout(pubsub.ctx, 15*time.Second)
-		logger.Infof("开始处理来自节点 %s 的消息", addrInfo.ID.String())
+		// logger.Infof("开始处理来自节点 %s 的消息", addrInfo.ID.String())
 
 		// 异步处理消息
 		go func(ctx context.Context, msg *Message) {
@@ -474,14 +474,14 @@ func (pubsub *NodePubSub) topicSubLoop(topicSub *Subscription, handler PubSubMsg
 				logger.Warn("消息处理超时或上下文已取消")
 				return
 			default:
-				logger.Info("调用消息处理函数")
+				// logger.Info("调用消息处理函数")
 				handler(msg)
-				logger.Info("消息处理完成")
+				// logger.Info("消息处理完成")
 			}
 		}(msgCtx, message)
 	}
 
-	logger.Info("订阅消息循环结束")
+	// logger.Info("订阅消息循环结束")
 }
 
 // Pubsub 返回 PubSub 实例
@@ -526,7 +526,7 @@ func (pubsub *NodePubSub) NotifyNewPeer(peer peer.ID) error {
 		return fmt.Errorf("通知新节点失败")
 	}
 
-	logger.Infof("成功通知新节点: %s", peer.String())
+	// logger.Infof("成功通知新节点: %s", peer.String())
 	return nil
 }
 

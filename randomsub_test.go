@@ -45,7 +45,7 @@ func tryReceive(sub *Subscription) *Message {
 		return nil
 	} else {
 		// 使用正确的日志包打印消息
-		logger.Infof("节点 %s 收到消息: %s", sub.topic, string(m.Data))
+		// logger.Infof("节点 %s 收到消息: %s", sub.topic, string(m.Data))
 		return m
 	}
 }
@@ -92,16 +92,16 @@ func TestRandomsubSmall(t *testing.T) {
 	count := 0
 	for i := 0; i < 10; i++ {
 		msg := []byte(fmt.Sprintf("message %d", i))
-		logger.Infof("节点 %s 发布消息: %s", topics[i].String(), string(msg))
+		// logger.Infof("节点 %s 发布消息: %s", topics[i].String(), string(msg))
 
 		if err := topics[i].Publish(ctx, msg); err != nil {
 			t.Fatal(err)
 		}
 
-		for j, sub := range subs {
+		for _, sub := range subs {
 			if m := tryReceive(sub); m != nil {
 				count++
-				logger.Infof("节点 %d 成功接收消息，当前接收计数: %d", j, count)
+				// logger.Infof("节点 %d 成功接收消息，当前接收计数: %d", j, count)
 			}
 		}
 	}
@@ -153,16 +153,16 @@ func TestRandomsubBig(t *testing.T) {
 	count := 0
 	for i := 0; i < 10; i++ {
 		msg := []byte(fmt.Sprintf("message %d", i))
-		logger.Infof("节点 %s 发布消息: %s", topics[i].String(), string(msg))
+		// logger.Infof("节点 %s 发布消息: %s", topics[i].String(), string(msg))
 
 		if err := topics[i].Publish(ctx, msg); err != nil {
 			t.Fatal(err)
 		}
 
-		for j, sub := range subs {
+		for _, sub := range subs {
 			if m := tryReceive(sub); m != nil {
 				count++
-				logger.Infof("节点 %d 成功接收消息，当前接收计数: %d", j, count)
+				// logger.Infof("节点 %d 成功接收消息，当前接收计数: %d", j, count)
 			}
 		}
 	}

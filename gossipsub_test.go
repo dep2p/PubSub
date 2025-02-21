@@ -132,7 +132,7 @@ func TestSparseGossipsub(t *testing.T) {
 				// 如果获取消息失败，则报告错误
 				t.Fatal(sub.err)
 			}
-			logger.Infof("========== %s", got.Data)
+			// logger.Infof("========== %s", got.Data)
 			// 验证接收到的消息是否与发布的消息一致
 			if !bytes.Equal(msg, got.Data) {
 				// 如果消息不一致，则报告错误

@@ -835,8 +835,8 @@ func (p *PubSub) processLoop(ctx context.Context) {
 			thunk() // 执行评估函数
 
 		case pid := <-p.blacklistPeer: // 处理黑名单 peer 请求
-			logger.Infof("将节点 %s 加入黑名单", pid) // 记录黑名单操作
-			p.blacklist.Add(pid)              // 添加到黑名单
+			// logger.Infof("将节点 %s 加入黑名单", pid) // 记录黑名单操作
+			p.blacklist.Add(pid) // 添加到黑名单
 
 			ch, ok := p.peers[pid] // 检查 peer 是否存在
 			if ok {
@@ -852,8 +852,8 @@ func (p *PubSub) processLoop(ctx context.Context) {
 			}
 
 		case <-ctx.Done(): // 处理上下文完成事件
-			logger.Info("pubsub 进程循环关闭") // 记录进程循环关闭
-			return                       // 退出函数
+			// logger.Info("pubsub 进程循环关闭") // 记录进程循环关闭
+			return // 退出函数
 		}
 	}
 }
@@ -1121,7 +1121,7 @@ func (p *PubSub) announce(topic string, sub bool) {
 		case peer <- out: // 发送 RPC 给 peer
 			p.tracer.SendRPC(out, pid) // 追踪发送的 RPC
 		default:
-			logger.Infof("无法发送宣布消息到节点 %s: 队列已满; 调度重试", pid)
+			// logger.Infof("无法发送宣布消息到节点 %s: 队列已满; 调度重试", pid)
 			p.tracer.DropRPC(out, pid)          // 追踪丢弃的 RPC
 			go p.announceRetry(pid, topic, sub) // 调度重试
 		}
@@ -1174,7 +1174,7 @@ func (p *PubSub) doAnnounceRetry(pid peer.ID, topic string, sub bool) {
 	case peer <- out: // 发送 RPC 给 peer
 		p.tracer.SendRPC(out, pid) // 追踪发送的 RPC
 	default:
-		logger.Infof("无法发送宣布消息到节点 %s: 队列已满; 调度重试", pid)
+		// logger.Infof("无法发送宣布消息到节点 %s: 队列已满; 调度重试", pid)
 		p.tracer.DropRPC(out, pid)          // 追踪丢弃的 RPC
 		go p.announceRetry(pid, topic, sub) // 调度重试
 	}
@@ -1203,7 +1203,7 @@ func (p *PubSub) notifySubs(msg *Message) {
 		case f.ch <- msg: // 发送消息给订阅者
 		default:
 			p.tracer.UndeliverableMessage(msg) // 追踪未能递送的消息
-			logger.Infof("无法递送消息到主题 %s 的订阅者; 订阅者处理速度过慢", topic)
+			// logger.Infof("无法递送消息到主题 %s 的订阅者; 订阅者处理速度过慢", topic)
 		}
 	}
 }

@@ -1847,8 +1847,8 @@ func (gs *GossipSubRouter) clearIHaveCounters() {
 // applyIwantPenalties 应用 IWANT 请求惩罚。
 func (gs *GossipSubRouter) applyIwantPenalties() {
 	for p, count := range gs.gossipTracer.GetBrokenPromises() { // 遍历所有未遵守 IWANT 请求的对等节点。
-		logger.Infof("对等节点 %s 未遵守 %d 次 IWANT 请求; 添加惩罚", p, count) // 记录信息，说明哪个对等节点未遵守 IWANT 请求以及对应的次数。
-		gs.score.AddPenalty(p, count)                             // 根据未遵守的次数为该对等节点添加惩罚分。
+		// logger.Infof("对等节点 %s 未遵守 %d 次 IWANT 请求; 添加惩罚", p, count) // 记录信息，说明哪个对等节点未遵守 IWANT 请求以及对应的次数。
+		gs.score.AddPenalty(p, count) // 根据未遵守的次数为该对等节点添加惩罚分。
 	}
 }
 

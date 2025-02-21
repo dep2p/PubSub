@@ -155,8 +155,8 @@ func (fs *FloodSubRouter) Publish(msg *Message) {
 			fs.tracer.SendRPC(out, pid) // 追踪发送的RPC消息
 		default:
 			// 如果消息队列已满，丢弃消息
-			logger.Infof("丢弃消息到对等节点 %s: 队列已满", pid) // 队列已满，丢弃消息
-			fs.tracer.DropRPC(out, pid)             // 追踪丢弃的RPC消息
+			// logger.Infof("丢弃消息到对等节点 %s: 队列已满", pid) // 队列已满，丢弃消息
+			fs.tracer.DropRPC(out, pid) // 追踪丢弃的RPC消息
 		}
 	}
 }
